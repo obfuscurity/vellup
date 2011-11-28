@@ -1,4 +1,4 @@
 $LOAD_PATH.unshift File.dirname(__FILE__)
-require "app"
+require "web"
 
 run Vellup::Application
