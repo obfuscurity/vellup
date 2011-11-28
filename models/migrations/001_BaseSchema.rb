@@ -1,5 +1,3 @@
-$LOAD_PATH.unshift File.join(File.dirname(__FILE__), '..')
-require "models"
 
 Sequel.migration do
   up do
@@ -13,22 +11,21 @@ Sequel.migration do
 
     create_table(:users) do
       primary_key :id
-      foreign_key :account_id, :accounts
-      String      :email,         :size => 60, :null => false
       String      :username,      :size => 20, :null => false
       String      :password,      :size => 80, :null => false
+      String      :email,         :size => 60, :null => false
       String      :firstname,     :size => 20, :null => false
       String      :lastname,      :size => 40
       String      :api_token,     :size => 40, :null => false
       String      :confirm_token, :size => 40, :null => false
-      TrueClass   :email_is_username           :null => false, :default => true
+      TrueClass   :email_is_username,          :null => false, :default => true
       TrueClass   :enabled,                    :null => false, :default => false
       TrueClass   :confirmed,                  :null => false, :default => false
       DateTime    :created_at,                 :null => false
       DateTime    :updated_at,                 :null => false
       DateTime    :confirmed_at,               :null => true
       DateTime    :authenticated_at,           :null => true
-      DateTime    :visited_at,                 :null => false
+      DateTime    :visited_at,                 :null => true
     end
 
     create_table(:actions) do
