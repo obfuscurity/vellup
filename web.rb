@@ -51,8 +51,8 @@ module Vellup
       def authenticated?
         has_web_session? or redirect '/login'
       end
-      def account_owner?(account_id)
-        Account.filter(:id => account_id, :owner_id => @user.id).first ? true : false
+      def site_owner?(site_id)
+        Site.filter(:id => site_id, :owner_id => @user.id).first ? true : false
       end
     end
 
@@ -64,7 +64,7 @@ module Vellup
       @user = User.authenticate(params[:username], params[:password]) || nil
       if @user
         start_web_session
-        redirect '/accounts'
+        redirect '/sites'
       else
         flash[:notice] = "Username or Password Invalid, Please Try Again"
         redirect '/login'
@@ -81,16 +81,16 @@ module Vellup
     end
 
     get '/signup/?' do
-      redirect '/accounts/vellup/users/add'
+      redirect '/sites/vellup/users/add'
     end
 
     get '/users/:id/?' do
-      redirect "/accounts/vellup/users/#{params[:id]}"
+      redirect "/sites/vellup/users/#{params[:id]}"
     end
 
-    get '/accounts/?' do
+    get '/sites/?' do
       authenticated?
-      haml :'accounts/list'
+      haml :'sites/list'
     end
 
     post '/users/add' do
@@ -167,67 +167,67 @@ module Vellup
       end
     end
 
-    get '/accounts/add/?' do
+    get '/sites/add/?' do
       authenticated?
-      haml :'accounts/add'
+      haml :'sites/add'
     end
 
-    post '/accounts/add' do
+    post '/sites/add' do
       authenticated?
-      "new account submission"
+      "new site submission"
     end
 
-    get '/accounts/?' do
+    get '/sites/?' do
       authenticated?
-      has_at_least_one_account?
-      @accounts = Account.filter(:owner_id => @user[:id])
-      haml :'accounts/list'
+      has_at_least_one_site?
+      @sites = Site.filter(:owner_id => @user[:id])
+      haml :'sites/list'
     end
 
-    get '/accounts/:id/?' do
+    get '/sites/:id/?' do
       authenticated?
-      @profile = Account.filter(:name => params[:id]).first.values
-      haml :'accounts/profile', :locals => { :profile => @profile }
+      @profile = Site.filter(:name => params[:id]).first.values
+      haml :'sites/profile', :locals => { :profile => @profile }
     end
 
-    put '/accounts/:id' do
+    put '/sites/:id' do
       authenticated?
-      "account profile submission"
+      "site profile submission"
     end
 
-    delete '/accounts/:id' do
+    delete '/sites/:id' do
       authenticated?
-      "account delete"
+      "site delete"
     end
 
-    post '/accounts/:account/users/add' do
+    post '/sites/:site/users/add' do
       authenticated?
-      account_owner?
+      site_owner?
       "new user submission"
     end
 
-    get '/accounts/:account/users/?' do
+    get '/sites/:site/users/?' do
       authenticated?
-      account_owner?
-      haml :'users/list', :locals => { :users => @users, :account => params[:account] }
+      site_owner?
+      haml :'users/list', :locals => { :users => @users, :site => params[:site] }
     end
 
-    get '/accounts/:account/users/:id/?' do
+    get '/sites/:site/users/:id/?' do
       authenticated?
-      account_owner?
+      site_owner?
       @profile = user.filter(:id => params[:id]).first.values
       haml :'users/profile', :locals => { :profile => @profile }
     end
 
-    put '/accounts/:account/users/:id' do
+    put '/sites/:site/users/:id' do
       authenticated?
-      account_owner?
+      site_owner?
       "user profile submission"
     end
 
-    delete '/accounts/:account/users/:id' do
+    delete '/sites/:site/users/:id' do
       authenticated?
-      account_owner?
+      site_owner?
       "user delete"
     end
 

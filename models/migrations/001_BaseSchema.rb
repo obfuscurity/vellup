@@ -1,7 +1,7 @@
 
 Sequel.migration do
   up do
-    create_table(:accounts) do
+    create_table(:sites) do
       primary_key :id
       String      :name,          :size => 50, :null => false
       TrueClass   :enabled,                    :null => false, :default => false
@@ -35,14 +35,14 @@ Sequel.migration do
 
     create_table(:transactions) do
       DateTime    :timestamp,                  :null => false
-      foreign_key :account_id, :accounts
+      foreign_key :site_id, :sites
       foreign_key :user_id, :users
       foreign_key :action_id, :actions
     end
   end
 
   down do
-    drop_table(:transactions, :actions, :accounts, :users, :cascade => true)
+    drop_table(:transactions, :actions, :sites, :users, :cascade => true)
   end
 end
 

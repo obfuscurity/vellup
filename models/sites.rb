@@ -1,5 +1,5 @@
 
-class Account < Sequel::Model
+class Site < Sequel::Model
 
   many_to_one :users
 

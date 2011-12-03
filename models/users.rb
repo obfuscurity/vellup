@@ -5,7 +5,7 @@ require "rest_client"
 
 class User < Sequel::Model
 
-  one_to_many :accounts
+  one_to_many :sites
 
   Resque.redis = ENV['REDISTOGO_URL']
 

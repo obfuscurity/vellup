@@ -1,6 +1,17 @@
-%h1 Please Login
 
 - if flash[:notice]
   .alert-message
     flash[:notice]
 
+%form.form-stacked{ :method => "post", :action => "/login" }
+  %fieldset
+    .clearfix
+      %label{ :for => "username" } Username
+      .input
+        %input{ :id => "username", :name => "username" }
+    .clearfix
+      %label{ :for => "password" } Password
+      .input
+        %input{ :id => "password", :name => "password" }
+  .actions
+    %button{ :class => "btn primary", :type => "submit" } Login

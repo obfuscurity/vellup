@@ -18,7 +18,7 @@ Sequel.migration do
       :confirmed_at  => timestamp
     )
 
-    self[:accounts].insert(
+    self[:sites].insert(
       :owner_id      => 1,
       :name          => "vellup",
       :enabled       => true,
