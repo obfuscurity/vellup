@@ -1,7 +1,6 @@
+%h1 Welcome to Vellup
 
 - if flash[:notice]
-  #notice
-    %h2= flash[:notice]
-- else
-  %h2 Welcome to Vellup
+  .alert-message
+    flash[:notice]
 

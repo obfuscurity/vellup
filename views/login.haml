@@ -1,7 +1,6 @@
+%h1 Please Login
 
 - if flash[:notice]
-  #notice
-    %h2= flash[:notice]
-- else
-  %h2 Please Login
+  .alert-message
+    flash[:notice]
 
