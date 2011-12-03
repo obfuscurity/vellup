@@ -1,10 +1,15 @@
 require "sinatra"
 require "newrelic_rpm"
+require "rack-flash"
+#require "sinatra/redirect_with_flash"
+require "haml"
 
 require "./models/all"
 
 module Vellup
   class Application < Sinatra::Base
+
+    use Rack::Flash, :sweep => true
 
     configure do
       enable :logging
@@ -69,6 +74,10 @@ module Vellup
     get '/logout/?' do
       expire_web_session
       haml :login
+    end
+
+    get '/' do
+      haml :index
     end
 
     get '/signup/?' do
