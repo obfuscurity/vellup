@@ -5,16 +5,11 @@
     = flash[:notice]
 
 #main
-  %table
-    %th Name
-    %th Description
+  %ul.unstyled
     - @sites.each do |site|
-      %tr
-        %td
-          %a{ :href => "/sites/#{site[:name]}" }
-            = site[:name]
-        %td
-          = site[:description]
+      %li
+        %a{ :href => "/sites/#{site[:name]}" }
+          = site[:name]
 
   %form{ :method => "get", :action => "/sites/add" }
     %p
