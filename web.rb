@@ -23,11 +23,18 @@ module Vellup
       if has_web_session?
         @user = User.filter(:username => session[:user]).first
         @current_site = Site.filter(:owner_id => @user.id).order_by(:visited_at.desc).first || nil
+      else
+        @next_url = params[:next_url] || request.path
+      end
+    end
+
+    after do
+      if @next_url
+        flash[:next_url] = @next_url
       end
     end
 
     not_found do
-      flash[:not_found] = true
       haml :not_found
     end
 
