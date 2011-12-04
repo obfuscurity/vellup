@@ -22,6 +22,7 @@ module Vellup
     before do
       if has_web_session?
         @user = User.filter(:username => session[:user]).first
+        @current_site = Site.filter(:owner_id => @user.id).order_by(:visited_at.desc).first || nil
       end
     end
 
@@ -53,6 +54,9 @@ module Vellup
       end
       def site_owner?(site_id)
         Site.filter(:id => site_id, :owner_id => @user.id).first ? true : false
+      end
+      def has_at_least_one_site?
+        @current_site.nil? and redirect '/sites/add'
       end
     end
 
@@ -86,11 +90,6 @@ module Vellup
 
     get '/users/:id/?' do
       redirect "/sites/vellup/users/#{params[:id]}"
-    end
-
-    get '/sites/?' do
-      authenticated?
-      haml :'sites/list'
     end
 
     post '/users/add' do
@@ -179,8 +178,11 @@ module Vellup
 
     get '/sites/?' do
       authenticated?
+puts "foo"
       has_at_least_one_site?
+puts "bar"
       @sites = Site.filter(:owner_id => @user[:id])
+p @sites
       haml :'sites/list'
     end
 
