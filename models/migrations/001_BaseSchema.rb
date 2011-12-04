@@ -7,6 +7,7 @@ Sequel.migration do
       TrueClass   :enabled,                    :null => false, :default => false
       DateTime    :created_at,                 :null => false
       DateTime    :updated_at,                 :null => false
+      DateTime    :visited_at,                 :null => false
     end
 
     create_table(:users) do

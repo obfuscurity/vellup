@@ -23,7 +23,8 @@ Sequel.migration do
       :name          => "vellup",
       :enabled       => true,
       :created_at    => timestamp,
-      :updated_at    => timestamp
+      :updated_at    => timestamp,
+      :visited_at    => timestamp
     )
   end
 end
