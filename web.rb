@@ -1,7 +1,7 @@
 require "sinatra"
 require "newrelic_rpm"
 require "rack-flash"
-#require "sinatra/redirect_with_flash"
+require "sinatra/redirect_with_flash"
 require "haml"
 
 require "./models/all"
