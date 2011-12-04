@@ -1,0 +1,21 @@
+%h2 Sites
+
+- if flash[:notice]
+  .alert-message
+    flash[:notice]
+
+#main
+  %table
+    %th Name
+    %th Description
+    - @sites.each do |site|
+      %tr
+        %td
+          %a{ :href => "/sites/#{site[:name]}" }
+            = site[:name]
+        %td
+          = site[:description]
+
+  %form{ :method => "get", :action => "/sites/add" }
+    %p
+      %input{ :class => "btn", :name => "submit", :type => "submit", :value => "Add New site" }
