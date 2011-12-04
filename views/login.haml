@@ -1,7 +1,7 @@
 
 - if flash[:notice]
   .alert-message
-    flash[:notice]
+    = flash[:notice]
 
 %form.form-stacked{ :method => "post", :action => "/login" }
   %fieldset
