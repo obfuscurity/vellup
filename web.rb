@@ -185,11 +185,8 @@ module Vellup
 
     get '/sites/?' do
       authenticated?
-puts "foo"
       has_at_least_one_site?
-puts "bar"
       @sites = Site.filter(:owner_id => @user[:id])
-p @sites
       haml :'sites/list'
     end
 
