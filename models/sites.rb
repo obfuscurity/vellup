@@ -8,6 +8,7 @@ class Site < Sequel::Model
     self.created_at = Time.now
     self.updated_at = Time.now
     self.visited_at = Time.now
+    self.enabled = true
   end
 
   def before_update

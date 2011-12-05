@@ -180,13 +180,17 @@ module Vellup
 
     post '/sites/add' do
       authenticated?
-      "new site submission"
+      params.delete("submit")
+      @site = Site.new(:name => params[:name], :owner_id => @user.id)
+      @site.save
+      flash[:notice] = "Site created!"
+      redirect "/sites/#{@site.name}"
     end
 
     get '/sites/?' do
       authenticated?
       has_at_least_one_site?
-      @sites = Site.filter(:owner_id => @user[:id])
+      @sites = Site.filter(:owner_id => @user[:id], :enabled => true)
       haml :'sites/list'
     end
 

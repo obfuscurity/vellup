@@ -1,0 +1,14 @@
+%h2 Add Site
+
+- if flash[:notice]
+  .alert-message
+    = flash[:notice]
+
+%form.form-stacked{ :method => "post", :action => "/sites/add" }
+  %fieldset
+    .clearfix
+      %label{ :for => "name" } Name
+      .input
+        %input{ :id => "name", :name => "name" }
+  .actions
+    %button{ :class => "btn primary", :type => "submit" } Add New site

@@ -4,13 +4,9 @@
   .alert-message
     = flash[:notice]
 
-#main
-  %ul.unstyled
-    - @sites.each do |site|
-      %li
-        %a{ :href => "/sites/#{site[:name]}" }
-          = site[:name]
+%ul.unstyled
+  - @sites.each do |site|
+    %li
+      %a{ :href => "/sites/#{site[:name]}" }
+        = site[:name]
 
-  %form{ :method => "get", :action => "/sites/add" }
-    %p
-      %input{ :class => "btn", :name => "submit", :type => "submit", :value => "Add New site" }

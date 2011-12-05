@@ -1,0 +1,7 @@
+%h2= "Dashboard [#{profile[:name]}]"
+
+- if flash[:notice]
+  .alert-message
+    = flash[:notice]
+
+%p Eventually we'll have usage data here.
