@@ -28,6 +28,15 @@ class User < Sequel::Model
     self.updated_at = Time.now
   end
 
+  def after_update
+  end
+
+  def before_destroy
+  end
+
+  def after_destroy
+  end
+
   def encrypt_password(string)
     BCrypt::Password.create(string, :cost => 10)
   end
