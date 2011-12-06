@@ -92,15 +92,10 @@ module Vellup
     end
 
     get '/signup/?' do
-      redirect '/sites/vellup/users/add'
+      haml :signup
     end
 
-    get '/users/:id/?' do
-      redirect "/sites/vellup/users/#{params[:id]}"
-    end
-
-    post '/users/add' do
-      params.delete("submit")
+    post '/signup' do
       @user = User.new(params).save
       flash[:info] = "Please check your inbox for a confirmation email."
       redirect '/login'
@@ -177,7 +172,6 @@ module Vellup
 
     post '/sites/add' do
       authenticated?
-      params.delete("submit")
       @site = Site.new(:name => params[:name], :owner_id => @user.id).save
       flash[:success] = "Site created!"
       redirect "/sites/#{@site.name}"

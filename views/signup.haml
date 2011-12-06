@@ -1,0 +1,13 @@
+
+%form.form-stacked{ :method => "post", :action => "/signup" }
+  %fieldset
+    .clearfix
+      %label{ :for => "username" } Email
+      .input
+        %input{ :id => "username", :name => "username" }
+    .clearfix
+      %label{ :for => "password" } Password
+      .input
+        %input{ :id => "password", :type => "password", :name => "password" }
+  .well
+    %button{ :class => "btn primary", :type => "submit" } Signup for Vellup!
