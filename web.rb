@@ -101,7 +101,7 @@ module Vellup
       redirect '/login'
     end
 
-    get '/users/:id/confirm/:token/?' do
+    get '/confirm/:token/?' do
       @user = User.filter(:username => params[:id], :confirm_token => params[:token]).first || nil
       if @user
         @user.confirm.save
@@ -113,7 +113,7 @@ module Vellup
       end
     end
 
-    get '/users/:id/confirm/?' do
+    get '/confirm/?' do
       if has_session?
         if session[:user] == params[:id]
           flash[:info] = "Congratulations, this user has already been confirmed!"
@@ -127,7 +127,7 @@ module Vellup
       end
     end
 
-    post '/users/:id/confirm' do
+    post '/confirm' do
       @user = User.filter(:username => params[:id]).first || nil
       if @user
         if @user.confirmed == false
@@ -144,7 +144,7 @@ module Vellup
       end
     end
 
-    get '/users/:id/?' do
+    get '/profile/?' do
       authenticated?
       if @user.username == params[:id]
         haml :'users/profile', :locals => { :profile => @user }
@@ -153,7 +153,7 @@ module Vellup
       end
     end
 
-    put '/users/:id' do
+    put '/profile' do
       authenticated?
       if @user.username == params[:id]
         %w( _method id submit ).each {|v| params.delete(v) }
