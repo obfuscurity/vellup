@@ -23,6 +23,9 @@
             - else
               %li
                 %a{ :href => "/login" } Login
+              %li
+                %a{ :href => "/signup" } Signup
+
     %div{ :class => "flash container" }
       - if flash[:error]
         %div{ :class => "alert-message error fade in", :"data-alert" => "alert" }
