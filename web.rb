@@ -104,10 +104,11 @@ module Vellup
     end
 
     get '/confirm/:token/?' do
-      @user = User.filter(:username => params[:id], :confirm_token => params[:token]).first || nil
+      @user = User.filter(:confirm_token => params[:token], :enabled => true, :confirmed => false).first || nil
       if @user
-        @user.confirm.save
-        flash[:info] = "Your email has been confirmed. You may now login."
+        @user.confirm
+        @user.save
+        flash[:success] = "Your email has been confirmed. You may now login."
         redirect '/login'
       else
         flash[:info] = "We were unable to confirm your email.<br />Please check your confirmation link for accuracy."
