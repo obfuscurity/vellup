@@ -76,7 +76,7 @@ module Email
                     :to      => "#{user.firstname} #{user.lastname} <#{user.email}>",
                     :subject => "Vellup Confirmation",
                     :text    => "Click the following link to complete your registration:\n" +
-                                "http://127.0.0.1:4567/users/#{user.username}/confirm/#{user.confirm_token}"
+                                "http://127.0.0.1:4567/confirm/#{user.confirm_token}"
   end
 
   def perform(id, action)
