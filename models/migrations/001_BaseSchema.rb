@@ -6,8 +6,8 @@ Sequel.migration do
       String      :username,      :size => 20, :null => false
       String      :password,      :size => 80, :null => false
       String      :email,         :size => 60, :null => false
-      String      :firstname,     :size => 20, :null => true
-      String      :lastname,      :size => 40, :null => true
+      String      :firstname,     :size => 20, :null => false
+      String      :lastname,      :size => 40, :null => false
       String      :api_token,     :size => 40, :null => false
       String      :confirm_token, :size => 40, :null => false
       TrueClass   :email_is_username,          :null => false, :default => true
