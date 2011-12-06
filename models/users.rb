@@ -20,10 +20,6 @@ class User < Sequel::Model
   end
 
   def after_create
-    super
-    if self.email_is_username is true
-      self.email = self.username
-    end
     Resque.enqueue(Email, self.id, :confirmation)
   end
 
