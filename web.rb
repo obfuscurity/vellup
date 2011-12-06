@@ -77,14 +77,14 @@ module Vellup
         start_web_session
         redirect '/sites'
       else
-        flash[:notice] = "Username or Password Invalid, Please Try Again"
+        flash[:info] = "Username or Password Invalid, Please Try Again"
         redirect '/login'
       end
     end
 
     get '/logout/?' do
       expire_web_session
-      haml :login
+      haml :index
     end
 
     get '/' do
@@ -101,21 +101,19 @@ module Vellup
 
     post '/users/add' do
       params.delete("submit")
-      @user = User.new(params)
-      @user.save
-      flash[:notice] = "Please check your inbox for a confirmation email."
+      @user = User.new(params).save
+      flash[:info] = "Please check your inbox for a confirmation email."
       redirect '/login'
     end
 
     get '/users/:id/confirm/:token/?' do
       @user = User.filter(:username => params[:id], :confirm_token => params[:token]).first || nil
       if @user
-        @user.confirm
-        @user.save
-        flash[:notice] = "Your email has been confirmed. You may now login."
+        @user.confirm.save
+        flash[:info] = "Your email has been confirmed. You may now login."
         redirect '/login'
       else
-        flash[:notice] = "We were unable to confirm your email.<br />Please check your confirmation link for accuracy."
+        flash[:info] = "We were unable to confirm your email.<br />Please check your confirmation link for accuracy."
         redirect '/login'
       end
     end
@@ -123,10 +121,10 @@ module Vellup
     get '/users/:id/confirm/?' do
       if has_session?
         if session[:user] == params[:id]
-          flash[:notice] = "Congratulations, this user has already been confirmed!"
+          flash[:info] = "Congratulations, this user has already been confirmed!"
           redirect '/'
         else
-          flash[:notice] = "Do you want to resend confirmation for a different user?<br />If so, please logout and try again."
+          flash[:info] = "Do you want to resend confirmation for a different user?<br />If so, please logout and try again."
           redirect '/'
         end
       else
@@ -137,23 +135,23 @@ module Vellup
     post '/users/:id/confirm' do
       @user = User.filter(:username => params[:id]).first || nil
       if @user
-        if @user[:confirmed] == false
+        if @user.confirmed == false
           @user.resend_confirmation
-          flash[:notice] = "Please check your inbox for a new confirmation email."
+          flash[:info] = "Please check your inbox for a new confirmation email."
           redirect '/login'
         else
-          flash[:notice] = "Congratulations, this user has already been confirmed!<br />Please login at any time."
+          flash[:info] = "Congratulations, this user has already been confirmed!<br />Please login at any time."
           redirect '/login'
         end
       else
-        flash[:notice] = "Username not found. Please try again."
+        flash[:info] = "Username not found. Please try again."
         redirect '/login'
       end
     end
 
     get '/users/:id/?' do
       authenticated?
-      if @user[:username] == params[:id]
+      if @user.username == params[:id]
         haml :'users/profile', :locals => { :profile => @user }
       else
         redirect '/contemplative_robot'
@@ -162,11 +160,10 @@ module Vellup
 
     put '/users/:id' do
       authenticated?
-      if @user[:username] == params[:id]
+      if @user.username == params[:id]
         %w( _method id submit ).each {|v| params.delete(v) }
-        @user.update(params)
-        @user.save
-        flash[:notice] = "Your profile has been updated."
+        @user.update(params).save
+        flash[:info] = "Your profile has been updated."
         haml :'users/profile', :locals => { :profile => @user }
       else
         redirect '/contemplative_robot'
@@ -181,33 +178,29 @@ module Vellup
     post '/sites/add' do
       authenticated?
       params.delete("submit")
-      @site = Site.new(:name => params[:name], :owner_id => @user.id)
-      @site.save
-      flash[:notice] = "Site created!"
+      @site = Site.new(:name => params[:name], :owner_id => @user.id).save
+      flash[:success] = "Site created!"
       redirect "/sites/#{@site.name}"
     end
 
     get '/sites/?' do
       authenticated?
       has_at_least_one_site?
-      @sites = Site.filter(:owner_id => @user[:id], :enabled => true)
+      @sites = Site.filter(:owner_id => @user.id, :enabled => true)
       haml :'sites/list'
     end
 
-    get '/sites/:id/?' do
+    get '/sites/:name/?' do
       authenticated?
-      @profile = Site.filter(:name => params[:id]).first.values
+      @profile = Site.filter(:name => params[:name], :owner_id => @user.id, :enabled => true).first.values
       haml :'sites/profile', :locals => { :profile => @profile }
     end
 
-    put '/sites/:id' do
+    delete '/sites/:name' do
       authenticated?
-      "site profile submission"
-    end
-
-    delete '/sites/:id' do
-      authenticated?
-      "site delete"
+      Site.filter(:name => params[:name], :owner_id => @user.id).destroy
+      flash[:info] = "Site destroyed!"
+      redirect "/sites"
     end
 
     post '/sites/:site/users/add' do
@@ -225,7 +218,7 @@ module Vellup
     get '/sites/:site/users/:id/?' do
       authenticated?
       site_owner?
-      @profile = user.filter(:id => params[:id]).first.values
+      @profile = User.filter(:id => params[:id]).first
       haml :'users/profile', :locals => { :profile => @profile }
     end
 
