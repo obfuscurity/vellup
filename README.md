@@ -3,7 +3,7 @@
 Vellup is a web service and API for easily integrating user accounts
 into web applications without the hassle of managing it yourself.
 
-# Development
+# Local Development
 
 When running the app locally, make sure to set the following environment
 variables for any shells you start processes from:
