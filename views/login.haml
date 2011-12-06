@@ -1,8 +1,4 @@
 
-- if flash[:notice]
-  .alert-message
-    = flash[:notice]
-
 %form.form-stacked{ :method => "post", :action => "/login" }
   %fieldset
     .clearfix
@@ -13,5 +9,5 @@
       %label{ :for => "password" } Password
       .input
         %input{ :id => "password", :type => "password", :name => "password" }
-  .actions
+  .well
     %button{ :class => "btn primary", :type => "submit" } Login

@@ -2,10 +2,48 @@
 %html{ :xmlns => "http://www.w3.org/1999/xhtml" }
   %head
     %title Vellup
-    %meta{"http-equiv" => "Content-Type", :content => "text/html;charset=utf-8" }
+    %meta{ "http-equiv" => "Content-Type", :content => "text/html;charset=utf-8" }
     %link{ :rel => "stylesheet", :type => "text/css", :href => "http://twitter.github.com/bootstrap/1.4.0/bootstrap.min.css" }
+    %link{ :rel => "stylesheet", :type => "text/css", :href => "/c/style.css" }
+    %script{ :type => "text/javascript", :src => "https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js" }
+    %script{ :type => "text/javascript", :src => "/j/bootstrap-alerts.js" }
   %body
+    .topbar
+      .topbar-inner
+        .container
+          %a.brand{ :href => "/" } Vellup
+          %ul.nav
+            - if @user
+              %li
+                %a{ :href => "/sites" } Sites
+              %li
+                %a{ :href => "/sites/add" } Add Site
+              %li
+                %a{ :href => "/logout" } Logout
+            - else
+              %li
+                %a{ :href => "/login" } Login
+    %div{ :class => "flash container" }
+      - if flash[:error]
+        %div{ :class => "alert-message error fade in", :"data-alert" => "alert" }
+          %a{ :class => "close", :href => "#" } ×
+          %p= flash[:error]
+      
+      - if flash[:warning]
+        %div{ :class => "alert-message warning fade in", :"data-alert" => "alert" }
+          %a{ :class => "close", :href => "#" } ×
+          %p= flash[:warning]
+      
+      - if flash[:info]
+        %div{ :class => "alert-message info fade in", :"data-alert" => "alert" }
+          %a{ :class => "close", :href => "#" } ×
+          %p= flash[:info]
+      
+      - if flash[:success]
+        %div{ :class => "alert-message success fade in", :"data-alert" => "alert" }
+          %a{ :class => "close", :href => "#" } ×
+          %p= flash[:success]
+
     .container
-      %h1 Vellup
       =yield
 

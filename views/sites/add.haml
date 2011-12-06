@@ -1,8 +1,5 @@
-%h2 Add Site
 
-- if flash[:notice]
-  .alert-message
-    = flash[:notice]
+%h2 Add Site
 
 %form.form-stacked{ :method => "post", :action => "/sites/add" }
   %fieldset
@@ -10,5 +7,5 @@
       %label{ :for => "name" } Name
       .input
         %input{ :id => "name", :name => "name" }
-  .actions
-    %button{ :class => "btn primary", :type => "submit" } Add New site
+  .well
+    %button{ :class => "btn primary", :type => "submit" } Add New Site
