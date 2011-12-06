@@ -14,6 +14,17 @@ $ export HEROKU_SHARED_POSTGRESQL_URL=...
 $ export REDISTOGO_URL=...
 ```
 
+## Migrations
+
+Supported tasks are <tt>:reset</tt>, <tt>:up</tt>, <tt>:down</tt> and <tt>:to<tt> (used with <tt>VERSION</tt>).
+
+```bash
+$ heroku run rake db:migrate:reset
+Running rake db:migrate:reset attached to terminal... up, run.3
+(in /app)
+<= sq:migrate:reset executed
+```
+
 ## Starting the web process
 
 ```bash
