@@ -96,7 +96,9 @@ module Vellup
     end
 
     post '/signup' do
-      @user = User.new(params).save
+      @user = User.new(params)
+      @user.email_is_username = false
+      @user.save
       flash[:info] = "Please check your inbox for a confirmation email."
       redirect '/login'
     end
