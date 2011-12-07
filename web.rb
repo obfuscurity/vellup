@@ -120,33 +120,28 @@ module Vellup
     end
 
     get '/confirm/?' do
-      if has_session?
-        if session[:user] == params[:id]
-          flash[:info] = "Congratulations, this user has already been confirmed!"
-          redirect '/'
-        else
-          flash[:info] = "Do you want to resend confirmation for a different user?<br />If so, please logout and try again."
-          redirect '/'
-        end
+      if has_web_session?
+        flash[:info] = "Do you want to resend confirmation for a different user?<br />If so, please logout and try again."
+        redirect '/'
       else
         haml :'users/confirm'
       end
     end
 
     post '/confirm' do
-      @user = User.filter(:username => params[:id]).first || nil
+      @user = User.filter(:username => params[:username]).first || nil
       if @user
         if @user.confirmed == false
           @user.resend_confirmation
           flash[:info] = "Please check your inbox for a new confirmation email."
           redirect '/login'
         else
-          flash[:info] = "Congratulations, this user has already been confirmed!<br />Please login at any time."
+          flash[:info] = "This user has already been confirmed. Please login at any time."
           redirect '/login'
         end
       else
-        flash[:info] = "Username not found. Please try again."
-        redirect '/login'
+        flash[:error] = "Username not found. Please try again."
+        haml :'users/confirm'
       end
     end
 
@@ -196,7 +191,7 @@ module Vellup
       haml :'sites/profile', :locals => { :profile => @profile }
     end
 
-    delete '/sites/:name' do
+    delete '/sites/:name/?' do
       authenticated?
       Site.filter(:name => params[:name], :owner_id => @user.id).destroy
       flash[:info] = "Site destroyed!"

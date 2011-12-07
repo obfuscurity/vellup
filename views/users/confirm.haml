@@ -1,0 +1,11 @@
+
+%h2 Lost Confirmation Email?
+  
+%form.form-stacked{ :method => "post", :action => "/confirm" }
+  %fieldset
+    .clearfix
+      %label{ :for => "username" } Username
+      .input
+        %input{ :id => "username", :name => "username" }
+  .well
+    %button{ :class => "btn primary", :type => "submit" } Resend Email
