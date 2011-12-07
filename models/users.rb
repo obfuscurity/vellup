@@ -21,7 +21,7 @@ class User < Sequel::Model
   end
 
   def after_create
-    Resque.enqueue(Email, self.id, :confirmation)
+    Resque.enqueue(Email, minimal_user_data, :confirmation)
   end
 
   def before_update
@@ -36,6 +36,15 @@ class User < Sequel::Model
   end
 
   def after_destroy
+  end
+
+  def minimal_user_data
+    data = {}
+    data[:firstname] = self.firstname
+    data[:lastname] = self.lastname
+    data[:email] = self.email
+    data[:confirm_token] = self.confirm_token
+    data
   end
 
   def encrypt_password(string)
@@ -56,14 +65,14 @@ class User < Sequel::Model
   end
 
   def resend_confirmation
-    Resque.enqueue(Email, self.id, :confirmation)
+    Resque.enqueue(Email, minimal_user_data, :confirmation)
   end
 
   def confirm
     self.confirmed = true
     self.confirmed_at = Time.now
     self.updated_at = Time.now
-    Resque.enqueue(Email, self.id, :confirmed)
+    Resque.enqueue(Email, minimal_user_data, :confirmed)
   end
 end
 
@@ -74,18 +83,17 @@ module Email
   def send_email_to(user, subject, message)
     RestClient.post ENV['MAILGUN_API_URL'] + "/messages",
                     :from    => "support@vellup.com",
-                    :to      => "#{user.firstname} #{user.lastname} <#{user.email}>",
+                    :to      => "#{user['firstname'].capitalize} #{user['lastname'].capitalize} <#{user['email']}>",
                     :subject => subject,
                     :text    => message
   end
 
-  def perform(id, action)
-    user = User.filter(:id => id).first
+  def perform(user, action)
     subject = message = ""
     if user
       if (action == "confirmation")
         message = "Click the following link to complete your registration:\n" +
-                  "http://127.0.0.1:4567/confirm/#{user.confirm_token}"
+                  "http://127.0.0.1:4567/confirm/#{user['confirm_token']}"
         subject = "Vellup Confirmation"
       elsif (action == "confirmed")
         message = "You are now registered for Vellup! Get started here:\n" +
