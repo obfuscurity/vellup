@@ -63,7 +63,10 @@ module Vellup
         Site.filter(:id => site_id, :owner_id => @user.id).first ? true : false
       end
       def has_at_least_one_site?
-        @current_site.nil? and redirect '/sites/add'
+        if @current_site.nil?
+          flash[:info] = "Please add your first Site."
+          redirect '/sites/add'
+        end
       end
     end
 
