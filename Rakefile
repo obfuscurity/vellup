@@ -35,7 +35,6 @@ namespace :db do
 end
 
 namespace :queue do
-  require "resque"
   require "resque/tasks"
   require "./models/all"
   Resque.redis = ENV['REDISTOGO_URL']
