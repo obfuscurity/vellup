@@ -4,3 +4,6 @@ body {
 .flash {
   padding-top: 20px;
 }
+.lost_confirmation, .lost_password {
+  padding-left: 20px;
+}

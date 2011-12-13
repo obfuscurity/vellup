@@ -11,6 +11,7 @@ class User < Sequel::Model
 
   def before_create
     super
+    self.email = self.username if (self.email_is_username)
     self.enabled = true
     self.created_at = Time.now
     self.updated_at = Time.now
@@ -74,6 +75,21 @@ class User < Sequel::Model
     self.updated_at = Time.now
     Resque.enqueue(Email, minimal_user_data, :confirmed)
   end
+
+  def confirmed?
+    self.confirmed
+  end
+
+  def send_password_change_request
+ puts "old token is #{self.confirm_token}"
+    self.confirm_token = UUID.generate
+ puts "new token is #{self.confirm_token}"
+    Resque.enqueue(Email, minimal_user_data, :resetpassword)
+  end
+
+  def password=(string)
+    self.password = encrypt_password(string)
+  end
 end
 
 module Email
@@ -92,13 +108,17 @@ module Email
     subject = message = ""
     if user
       if (action == "confirmation")
+        subject = "Vellup Confirmation"
         message = "Click the following link to complete your registration:\n" +
                   "http://127.0.0.1:4567/confirm/#{user['confirm_token']}"
-        subject = "Vellup Confirmation"
       elsif (action == "confirmed")
+        subject = "Welcome to Vellup"
         message = "You are now registered for Vellup! Get started here:\n" +
                      "http://127.0.0.1:4567/login"
-        subject = "Welcome to Vellup"
+      elsif (action == "resetpassword")
+        subject = "Vellup Password Change"
+        message = "Click the following link to change your password:\n" +
+                  "http://127.0.0.1:4567/reset-password/#{user['confirm_token']}"
       end
     end
     send_email_to(user, subject, message)

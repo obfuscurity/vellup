@@ -100,7 +100,6 @@ module Vellup
 
     post '/signup' do
       @user = User.new(params)
-      @user.email_is_username = false
       @user.save
       flash[:info] = "Please check your inbox for a confirmation email."
       redirect '/login'
@@ -121,7 +120,7 @@ module Vellup
 
     get '/confirm/?' do
       if has_web_session?
-        flash[:info] = "Do you want to resend confirmation for a different user?<br />If so, please logout and try again."
+        flash[:info] = "Do you want to resend confirmation for a different user? If so, please logout and try again."
         redirect '/'
       else
         haml :'users/confirm'
@@ -131,17 +130,86 @@ module Vellup
     post '/confirm' do
       @user = User.filter(:username => params[:username]).first || nil
       if @user
-        if @user.confirmed == false
-          @user.resend_confirmation
-          flash[:info] = "Please check your inbox for a new confirmation email."
+        if @user.confirmed?
+          flash[:info] = "This user has already been confirmed. Please login at any time."
           redirect '/login'
         else
-          flash[:info] = "This user has already been confirmed. Please login at any time."
+          @user.resend_confirmation
+          flash[:info] = "Please check your inbox for a new confirmation email."
           redirect '/login'
         end
       else
         flash[:error] = "Username not found. Please try again."
         haml :'users/confirm'
+      end
+    end
+
+    get '/reset-password/?' do
+      if has_web_session?
+        flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
+        redirect '/profile'
+      else
+        haml :'users/reset_password'
+      end
+    end
+
+    post '/reset-password' do
+      if has_web_session?
+        flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
+        redirect '/profile'
+      else
+        @user = User.filter(:username => params[:username]).first || nil
+        if @user
+          if @user.confirmed?
+            @user.send_password_change_request
+            flash[:info] = "Please check your inbox for directions to reset your password."
+            redirect '/login'
+          else
+            flash[:error] = "Your account hasn't been confirmed yet. Do you need a new confirmation email instead?"
+            redirect '/confirm'
+          end
+        else
+          flash[:error] = "Username not found. Please try again."
+          haml :'users/reset_password'
+        end
+      end
+    end
+
+    get '/reset-password/:token/?' do
+      if has_web_session?
+        flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
+        redirect '/profile'
+      else
+        @user = User.filter(:confirm_token => params[:token]).first || nil
+        if @user
+          haml :'users/reset_password', :locals => { :change => true }
+        else
+          flash[:error] = "I don't recognize that token. Mind if we try again?"
+          redirect '/reset-password'
+        end
+      end
+    end
+
+    post '/reset-password/:token/?' do
+      if has_web_session?
+        flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
+        redirect '/profile'
+      else
+        @user = User.filter(:confirm_token => params[:token]).first || nil
+        if @user
+          if ((params[:password1] == params[:password2]) and (params[:password1] != ""))
+            @user.password= params[:password1]
+            @user.save
+            flash[:success] = "Your password has been successfully changed."
+            redirect '/login'
+          else
+            flash[:error] = "Those passwords don't match. Please try again."
+            haml :'users/reset_password', :locals => { :change => true }
+          end
+        else
+          flash[:error] = "I don't recognize that token. Mind if we try again?"
+          redirect '/reset-password'
+        end
       end
     end
 
