@@ -87,9 +87,9 @@ class User < Sequel::Model
     Resque.enqueue(Email, minimal_user_data, :resetpassword)
   end
 
-  def password=(string)
-    self.password = encrypt_password(string)
-  end
+  #def password=(string)
+  #  self.password = encrypt_password(string)
+  #end
 end
 
 module Email
