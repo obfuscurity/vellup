@@ -71,17 +71,27 @@ module Vellup
     end
 
     get '/login/?' do
-      haml :login
+      if has_web_session?
+        flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
+        redirect '/profile'
+      else
+        haml :login
+      end
     end
 
     post '/login' do
-      @user = User.authenticate(params[:username], params[:password])
-      if @user
-        start_web_session
-        redirect '/sites'
+      if has_web_session?
+        flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
+        redirect '/profile'
       else
-        flash[:info] = "Username or Password Invalid, Please Try Again"
-        redirect '/login'
+        @user = User.authenticate(params[:username], params[:password])
+        if @user
+          start_web_session
+          redirect '/sites'
+        else
+          flash[:info] = "Username or Password Invalid, Please Try Again"
+          redirect '/login'
+        end
       end
     end
 
@@ -95,52 +105,72 @@ module Vellup
     end
 
     get '/signup/?' do
-      haml :signup
+      if has_web_session?
+        flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
+        redirect '/profile'
+      else
+        haml :signup
+      end
     end
 
     post '/signup' do
-      @user = User.new(params.merge({ "email" => params[:username] }))
-      @user.save
-      flash[:info] = "Please check your inbox for a confirmation email."
-      redirect '/login'
+      if has_web_session?
+        flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
+        redirect '/profile'
+      else
+        @user = User.new(params.merge({ "email" => params[:username] }))
+        @user.save
+        flash[:info] = "Please check your inbox for a confirmation email."
+        redirect '/login'
+      end
     end
 
     get '/confirm/:token/?' do
-      @user = User.filter(:confirm_token => params[:token], :enabled => true, :confirmed => false).first
-      if @user
-        @user.confirm
-        @user.save
-        flash[:success] = "Your email has been confirmed. You may now login."
-        redirect '/login'
+      if has_web_session?
+        flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
+        redirect '/profile'
       else
-        flash[:info] = "We were unable to confirm your email.<br />Please check your confirmation link for accuracy."
-        redirect '/login'
+        @user = User.filter(:confirm_token => params[:token], :enabled => true, :confirmed => false).first
+        if @user
+          @user.confirm
+          @user.save
+          flash[:success] = "Your email has been confirmed. You may now login."
+          redirect '/login'
+        else
+          flash[:info] = "We were unable to confirm your email.<br />Please check your confirmation link for accuracy."
+          redirect '/login'
+        end
       end
     end
 
     get '/confirm/?' do
       if has_web_session?
         flash[:info] = "Do you want to resend confirmation for a different user? If so, please logout and try again."
-        redirect '/'
+        redirect '/profile'
       else
         haml :'users/confirm'
       end
     end
 
     post '/confirm' do
-      @user = User.filter(:username => params[:username]).first
-      if @user
-        if @user.confirmed?
-          flash[:info] = "This user has already been confirmed. Please login at any time."
-          redirect '/login'
-        else
-          @user.resend_confirmation
-          flash[:info] = "Please check your inbox for a new confirmation email."
-          redirect '/login'
-        end
+      if has_web_session?
+        flash[:info] = "Do you want to resend confirmation for a different user? If so, please logout and try again."
+        redirect '/profile'
       else
-        flash[:error] = "Username not found. Please try again."
-        haml :'users/confirm'
+        @user = User.filter(:username => params[:username]).first
+        if @user
+          if @user.confirmed?
+            flash[:info] = "This user has already been confirmed. Please login at any time."
+            redirect '/login'
+          else
+            @user.resend_confirmation
+            flash[:info] = "Please check your inbox for a new confirmation email."
+            redirect '/login'
+          end
+        else
+          flash[:error] = "Username not found. Please try again."
+          haml :'users/confirm'
+        end
       end
     end
 
@@ -197,7 +227,7 @@ module Vellup
       else
         @user = User.filter(:confirm_token => params[:token]).first
         if @user
-          if ((params[:password1] == params[:password2]) and (params[:password1] != ""))
+          if ((params[:password1] == params[:password2]) and (params[:password1].empty?))
             @user.update_password(params[:password1])
             flash[:success] = "Your password has been successfully changed."
             redirect '/login'
@@ -214,23 +244,24 @@ module Vellup
 
     get '/profile/?' do
       authenticated?
-      if @user.username == params[:id]
-        haml :'users/profile', :locals => { :profile => @user }
-      else
-        redirect '/contemplative_robot'
-      end
+      haml :'users/profile', :locals => { :profile => @user }
     end
 
     put '/profile' do
       authenticated?
-      if @user.username == params[:id]
-        %w( _method id submit ).each {|v| params.delete(v) }
-        @user.update(params).save
-        flash[:info] = "Your profile has been updated."
-        haml :'users/profile', :locals => { :profile => @user }
-      else
-        redirect '/contemplative_robot'
+      if ((! params[:password1].empty?) || (! params[:password2].empty?))
+        if ((params[:password1] == params[:password2]) and (! params[:password1].empty?))
+          @user.update_password(params[:password1])
+        else
+          flash[:error] = "Those passwords don't match. Please try again."
+          redirect '/profile'
+        end
       end
+      %w( _method password1 password2 ).each {|p| params.delete(p)}
+      @user.update(params)
+      @user.save
+      flash[:success] = "Your profile has been updated."
+      redirect '/profile'
     end
 
     get '/sites/add/?' do
