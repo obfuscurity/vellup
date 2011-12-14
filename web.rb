@@ -22,7 +22,7 @@ module Vellup
     before do
       if has_web_session?
         @user = User.filter(:username => session[:user]).first
-        @current_site = Site.filter(:owner_id => @user.id).order_by(:visited_at.desc).first || nil
+        @current_site = Site.filter(:owner_id => @user.id).order_by(:visited_at.desc).first
       else
         @next_url = params[:next_url] || request.path
       end
@@ -75,7 +75,7 @@ module Vellup
     end
 
     post '/login' do
-      @user = User.authenticate(params[:username], params[:password]) || nil
+      @user = User.authenticate(params[:username], params[:password])
       if @user
         start_web_session
         redirect '/sites'
@@ -99,14 +99,14 @@ module Vellup
     end
 
     post '/signup' do
-      @user = User.new(params)
+      @user = User.new(params.merge({ "email" => params[:username] }))
       @user.save
       flash[:info] = "Please check your inbox for a confirmation email."
       redirect '/login'
     end
 
     get '/confirm/:token/?' do
-      @user = User.filter(:confirm_token => params[:token], :enabled => true, :confirmed => false).first || nil
+      @user = User.filter(:confirm_token => params[:token], :enabled => true, :confirmed => false).first
       if @user
         @user.confirm
         @user.save
@@ -128,7 +128,7 @@ module Vellup
     end
 
     post '/confirm' do
-      @user = User.filter(:username => params[:username]).first || nil
+      @user = User.filter(:username => params[:username]).first
       if @user
         if @user.confirmed?
           flash[:info] = "This user has already been confirmed. Please login at any time."
@@ -158,7 +158,7 @@ module Vellup
         flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
         redirect '/profile'
       else
-        @user = User.filter(:username => params[:username]).first || nil
+        @user = User.filter(:username => params[:username]).first
         if @user
           if @user.confirmed?
             @user.send_password_change_request
@@ -180,9 +180,9 @@ module Vellup
         flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
         redirect '/profile'
       else
-        @user = User.filter(:confirm_token => params[:token]).first || nil
+        @user = User.filter(:confirm_token => params[:token]).first
         if @user
-          haml :'users/reset_password', :locals => { :change => true }
+          haml :'users/reset_password', :locals => { :user_wants_to_change_password => true }
         else
           flash[:error] = "I don't recognize that token. Mind if we try again?"
           redirect '/reset-password'
@@ -195,16 +195,15 @@ module Vellup
         flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
         redirect '/profile'
       else
-        @user = User.filter(:confirm_token => params[:token]).first || nil
+        @user = User.filter(:confirm_token => params[:token]).first
         if @user
           if ((params[:password1] == params[:password2]) and (params[:password1] != ""))
-            @user.password= params[:password1]
-            @user.save
+            @user.update_password(params[:password1])
             flash[:success] = "Your password has been successfully changed."
             redirect '/login'
           else
             flash[:error] = "Those passwords don't match. Please try again."
-            haml :'users/reset_password', :locals => { :change => true }
+            haml :'users/reset_password', :locals => { :user_wants_to_change_password => true }
           end
         else
           flash[:error] = "I don't recognize that token. Mind if we try again?"

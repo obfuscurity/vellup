@@ -11,7 +11,6 @@ class User < Sequel::Model
 
   def before_create
     super
-    self.email = self.username if (self.email_is_username)
     self.enabled = true
     self.created_at = Time.now
     self.updated_at = Time.now
@@ -81,15 +80,17 @@ class User < Sequel::Model
   end
 
   def send_password_change_request
- puts "old token is #{self.confirm_token}"
     self.confirm_token = UUID.generate
- puts "new token is #{self.confirm_token}"
+    self.save
     Resque.enqueue(Email, minimal_user_data, :resetpassword)
   end
 
-  #def password=(string)
-  #  self.password = encrypt_password(string)
-  #end
+  def update_password(string)
+    self.password = encrypt_password(string)
+    # destroy the old token
+    self.confirm_token = UUID.generate
+    self.save
+  end
 end
 
 module Email
