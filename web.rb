@@ -22,7 +22,7 @@ module Vellup
     before do
       if has_web_session?
         @user = User.filter(:username => session[:user]).first
-        @current_site = Site.filter(:owner_id => @user.id).order_by(:visited_at.desc).first
+        @sites = Site.filter(:owner_id => @user.id, :enabled => true).order_by(:created_at.asc).all
       else
         @next_url = params[:next_url] || request.path
       end
@@ -63,7 +63,7 @@ module Vellup
         Site.filter(:id => site_id, :owner_id => @user.id).first ? true : false
       end
       def has_at_least_one_site?
-        if @current_site.nil?
+        if @sites.empty?
           flash[:info] = "Please add your first Site."
           redirect '/sites/add'
         end
@@ -279,14 +279,13 @@ module Vellup
     get '/sites/?' do
       authenticated?
       has_at_least_one_site?
-      @sites = Site.filter(:owner_id => @user.id, :enabled => true)
       haml :'sites/list'
     end
 
     get '/sites/:name/?' do
       authenticated?
-      @profile = Site.filter(:name => params[:name], :owner_id => @user.id, :enabled => true).first.values
-      haml :'sites/profile', :locals => { :profile => @profile }
+      @site = Site.filter(:name => params[:name], :owner_id => @user.id, :enabled => true).first.values
+      haml :'sites/profile', :locals => { :profile => @site }
     end
 
     delete '/sites/:name/?' do
