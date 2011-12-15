@@ -290,7 +290,7 @@ module Vellup
 
     delete '/sites/:name/?' do
       authenticated?
-      Site.filter(:name => params[:name], :owner_id => @user.id).destroy
+      Site.filter(:name => params[:name], :owner_id => @user.id, :enabled => true).first.destroy
       flash[:info] = "Site destroyed!"
       redirect "/sites"
     end
