@@ -60,7 +60,7 @@ module Vellup
         has_web_session? or redirect '/login'
       end
       def site_owner?(site)
-        Site.filter(:name => site, :owner_id => @user.id, :enabled => true).first ? true : false
+        Site.filter(:name => site, :owner_id => @user.id, :enabled => true) or redirect '/not_found'
       end
       def has_at_least_one_site?
         if @sites.empty?
@@ -300,42 +300,37 @@ module Vellup
 
     get '/sites/:site/users/add' do
       authenticated?
-      if site_owner?(params[:site])
-        haml :'users/add', :locals => { :view => true, :site => params[:site] }
-      else
-        redirect '/not_found'
-      end
+      site_owner?(params[:site])
+      haml :'users/add', :locals => { :view => true, :site => params[:site] }
     end
 
     post '/sites/:site/users/add' do
       authenticated?
-      if site_owner?(params[:site])
-      else
-      end
+      site_owner?(params[:site])
     end
 
     get '/sites/:site/users/?' do
       authenticated?
-      site_owner?
+      site_owner?(params[:site])
       haml :'users/list', :locals => { :users => @users, :site => params[:site] }
     end
 
     get '/sites/:site/users/:id/?' do
       authenticated?
-      site_owner?
+      site_owner?(params[:site])
       @profile = User.filter(:id => params[:id]).first
       haml :'users/profile', :locals => { :profile => @profile }
     end
 
     put '/sites/:site/users/:id' do
       authenticated?
-      site_owner?
+      site_owner?(params[:site])
       "user profile submission"
     end
 
     delete '/sites/:site/users/:id' do
       authenticated?
-      site_owner?
+      site_owner?(params[:site])
       "user delete"
     end
 
