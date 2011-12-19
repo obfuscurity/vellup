@@ -59,8 +59,8 @@ module Vellup
       def authenticated?
         has_web_session? or redirect '/login'
       end
-      def site_owner?(site_id)
-        Site.filter(:id => site_id, :owner_id => @user.id).first ? true : false
+      def site_owner?(site)
+        Site.filter(:name => site, :owner_id => @user.id, :enabled => true).first ? true : false
       end
       def has_at_least_one_site?
         if @sites.empty?
@@ -109,7 +109,7 @@ module Vellup
         flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
         redirect '/profile'
       else
-        haml :signup
+        haml :'users/add', :locals => { :view => "signup" }
       end
     end
 
@@ -179,7 +179,7 @@ module Vellup
         flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
         redirect '/profile'
       else
-        haml :'users/reset_password'
+        haml :'users/reset_password', :locals => { :show_reset_form => false }
       end
     end
 
@@ -212,7 +212,7 @@ module Vellup
       else
         @user = User.filter(:confirm_token => params[:token]).first
         if @user
-          haml :'users/reset_password', :locals => { :user_wants_to_change_password => true }
+          haml :'users/reset_password', :locals => { :show_reset_form => true }
         else
           flash[:error] = "I don't recognize that token. Mind if we try again?"
           redirect '/reset-password'
@@ -227,13 +227,16 @@ module Vellup
       else
         @user = User.filter(:confirm_token => params[:token]).first
         if @user
-          if ((params[:password1] == params[:password2]) and (params[:password1].empty?))
+          p @user
+          if ((params[:password1] == params[:password2]) and (!params[:password1].empty?))
+            p "HERE 1"
             @user.update_password(params[:password1])
             flash[:success] = "Your password has been successfully changed."
             redirect '/login'
           else
+            p "HERE 2"
             flash[:error] = "Those passwords don't match. Please try again."
-            haml :'users/reset_password', :locals => { :user_wants_to_change_password => true }
+            haml :'users/reset_password', :locals => { :show_reset_form => true }
           end
         else
           flash[:error] = "I don't recognize that token. Mind if we try again?"
@@ -295,10 +298,20 @@ module Vellup
       redirect "/sites"
     end
 
+    get '/sites/:site/users/add' do
+      authenticated?
+      if site_owner?(params[:site])
+        haml :'users/add', :locals => { :view => true, :site => params[:site] }
+      else
+        redirect '/not_found'
+      end
+    end
+
     post '/sites/:site/users/add' do
       authenticated?
-      site_owner?
-      "new user submission"
+      if site_owner?(params[:site])
+      else
+      end
     end
 
     get '/sites/:site/users/?' do

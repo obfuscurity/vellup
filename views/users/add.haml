@@ -1,5 +1,10 @@
 
-%form.form-stacked{ :method => "post", :action => "/signup" }
+- if view == "signup"
+  %h2 Signup
+- else
+  %h2 Add User [ #{site} ]
+
+%form.form-stacked{ :method => "post" }
   %fieldset
     .clearfix
       %label{ :for => "username" } Email
@@ -18,5 +23,9 @@
       .input
         %input{ :id => "lastname", :name => "lastname" }
   .well
-    %button{ :class => "btn primary", :type => "submit" } Signup for Vellup!
-    %a.lost_confirmation{ :href => "/confirm" } Lost your confirmation Email?
+    - if view == "signup"
+      %button{ :class => "btn primary", :type => "submit" } Signup for Vellup!
+      %a.lost_confirmation{ :href => "/confirm" } Lost your confirmation Email?
+    - else
+      %button{ :class => "btn primary", :type => "submit" } Add User
+
