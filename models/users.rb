@@ -15,13 +15,14 @@ class User < Sequel::Model
     self.created_at = Time.now
     self.updated_at = Time.now
     self.visited_at = Time.now
+    self.confirmed_at = Time.now if (self.confirmed == true)
     self.password = encrypt_password(self.password)
     self.api_token = UUID.generate
     self.confirm_token = UUID.generate
   end
 
   def after_create
-    Resque.enqueue(Email, minimal_user_data, :confirmation)
+    Resque.enqueue(Email, minimal_user_data, :confirmation) unless (self.confirmed == true)
   end
 
   def before_update

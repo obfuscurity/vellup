@@ -60,7 +60,8 @@ module Vellup
         has_web_session? or redirect '/login'
       end
       def site_owner?(site)
-        Site.filter(:name => site, :owner_id => @user.id, :enabled => true) or redirect '/not_found'
+        @site = Site.filter(:name => site, :owner_id => @user.id, :enabled => true).first || nil
+        redirect '/not_found' if @site.nil?
       end
       def has_at_least_one_site?
         if @sites.empty?
@@ -307,12 +308,18 @@ module Vellup
     post '/sites/:site/users/add' do
       authenticated?
       site_owner?(params[:site])
+      params.delete("site")
+      @user = User.new(params.merge({ "site_id" => @site.id, "email" => params[:username], "confirmed" => true }))
+      @user.save
+      flash[:success] = "User added."
+      redirect "/sites/#{@site.name}/users"
     end
 
     get '/sites/:site/users/?' do
       authenticated?
       site_owner?(params[:site])
-      @users = User.from(:users, :sites).where(:users__site_id => :sites__id).select("users.*".lit, :sites__name.as(:site)).order(:id).all
+      @users = User.from(:users, :sites).where(:users__site_id => :sites__id).where(:sites__name => params[:site]).select("users.*".lit, :sites__name.as(:site)).order(:id).all
+      flash[:info] = "No users found." if @users.empty?
       haml :'users/list', :locals => { :users => @users, :site => params[:site] }
     end
 
