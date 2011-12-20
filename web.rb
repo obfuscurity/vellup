@@ -312,6 +312,7 @@ module Vellup
     get '/sites/:site/users/?' do
       authenticated?
       site_owner?(params[:site])
+      @users = User.from(:users, :sites).where(:users__site_id => :sites__id).select("users.*".lit, :sites__name.as(:site)).order(:id).all
       haml :'users/list', :locals => { :users => @users, :site => params[:site] }
     end
 
