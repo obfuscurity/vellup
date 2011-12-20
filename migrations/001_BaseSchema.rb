@@ -1,6 +1,15 @@
 
 Sequel.migration do
   up do
+    create_table(:sites) do
+      primary_key :id
+      String      :name,          :size => 50, :null => false
+      TrueClass   :enabled,                    :null => false, :default => false
+      DateTime    :created_at,                 :null => false
+      DateTime    :updated_at,                 :null => false
+      DateTime    :visited_at,                 :null => false
+    end
+
     create_table(:users) do
       primary_key :id
       String      :username,      :size => 60, :null => false
@@ -18,15 +27,7 @@ Sequel.migration do
       DateTime    :confirmed_at,               :null => true
       DateTime    :authenticated_at,           :null => true
       DateTime    :visited_at,                 :null => true
-    end
-
-    create_table(:sites) do
-      primary_key :id
-      String      :name,          :size => 50, :null => false
-      TrueClass   :enabled,                    :null => false, :default => false
-      DateTime    :created_at,                 :null => false
-      DateTime    :updated_at,                 :null => false
-      DateTime    :visited_at,                 :null => false
+      foreign_key :site_id, :sites, :deferrable => true
     end
 
     create_table(:actions) do

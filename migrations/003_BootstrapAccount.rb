@@ -11,6 +11,7 @@ Sequel.migration do
       :lastname      => "Dixon",
       :api_token     => "87bdbcb0-fb92-012e-a61c-109addaa2672",
       :confirm_token => "92da4870-fb92-012e-a61c-109addaa2672",
+      :site_id       => 1,
       :enabled       => true,
       :confirmed     => true,
       :created_at    => timestamp,
