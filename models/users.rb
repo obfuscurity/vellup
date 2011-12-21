@@ -1,3 +1,4 @@
+
 require "bcrypt"
 require "uuid"
 require "resque"
@@ -38,6 +39,11 @@ class User < Sequel::Model
   end
 
   def after_destroy
+  end
+
+  def destroy
+    self.enabled = false
+    self.save
   end
 
   def minimal_user_data
