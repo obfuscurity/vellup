@@ -4,6 +4,6 @@
 %ul.unstyled
   - @sites.each do |site|
     %li
-      %a{ :href => "/sites/#{site[:name]}" }
+      %a{ :href => "/sites/#{site[:uuid]}" }
         = site[:name]
 

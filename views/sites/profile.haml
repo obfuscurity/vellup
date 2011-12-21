@@ -3,8 +3,9 @@
 
 %p Eventually we'll have usage data here.
 
-%form.form-stacked{ :method => "post" }
-  %fieldset
+.well
+  %a{ :class => "btn default", :href => "/sites/#{profile[:uuid]}/users" } Users
+  %a{ :class => "btn primary", :href => "/sites/#{profile[:uuid]}/users/add" } Add User
+  %form{ :class => "forceleft", :method => "post" }
     %input{ :type => "hidden", :name => "_method", :value => "delete" }
-  .well
     %button{ :class => "btn danger", :type => "submit" } Destroy Site

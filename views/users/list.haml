@@ -4,8 +4,8 @@
 %ul.unstyled
   - @users.each do |user|
     %li
-      %a{ :href => "/sites/#{site}/users/#{user[:id]}" }
+      %a{ :href => "/sites/#{user[:site_uuid]}/users/#{user[:id]}" }
         #{user[:firstname].capitalize} #{user[:lastname].capitalize}
 
 .well
-  %a{ :href => "/sites/#{site}/users/add" } Add a new user?
+  %a{ :class => "btn primary", :href => "/sites/#{uuid}/users/add" } Add User
