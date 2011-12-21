@@ -7,3 +7,4 @@ body {
 .lost_confirmation, .lost_password {
   padding-left: 20px;
 }
+.forceleft { display: inline; }
