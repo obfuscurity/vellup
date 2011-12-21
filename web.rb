@@ -373,9 +373,15 @@ module Vellup
     delete '/sites/:uuid/users/:id' do
       authenticated?
       site_owner?(params[:uuid])
-      User.filter(:id => params[:id], :site_id => @site.id, :enabled => true).first.destroy
-      flash[:info] = "User destroyed!"
-      redirect "/sites/#{site.uuid}/users"
+      @site_user = User.filter(:id => params[:id], :site_id => @site.id, :enabled => true).first || nil
+      if !@site_user.nil?
+        @site_user.destroy
+        flash[:info] = "User destroyed!"
+        redirect "/sites/#{site.uuid}/users"
+      else
+        flash[:error] = "User not found."
+        redirect "/sites/#{@site.uuid}/users"
+      end
     end
 
   end
