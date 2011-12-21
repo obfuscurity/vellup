@@ -249,7 +249,7 @@ module Vellup
 
     get '/profile/?' do
       authenticated?
-      haml :'users/profile', :locals => { :profile => @user }
+      haml :'users/profile', :locals => { :profile => @user, :site => nil }
     end
 
     put '/profile' do
@@ -329,7 +329,7 @@ module Vellup
     get '/sites/:uuid/users/?' do
       authenticated?
       site_owner?(params[:uuid])
-      @users = User.from(:users, :sites).where(:users__site_id => :sites__id).where(:sites__uuid => params[:uuid]).select("users.*".lit, :sites__name.as(:site), :sites__uuid.as(:site_uuid)).order(:id).all
+      @users = User.from(:users, :sites).where(:users__site_id => :sites__id, :sites__uuid => params[:uuid], :users__enabled => true).select("users.*".lit, :sites__name.as(:site), :sites__uuid.as(:site_uuid)).order(:id).all
       flash[:info] = "No users found." if @users.empty?
       haml :'users/list', :locals => { :users => @users, :site => @site.name, :uuid => @site.uuid }
     end
@@ -337,7 +337,7 @@ module Vellup
     get '/sites/:uuid/users/:id/?' do
       authenticated?
       site_owner?(params[:uuid])
-      @profile = User.filter(:id => params[:id], :site_id => @site.id).first || nil
+      @profile = User.filter(:id => params[:id], :site_id => @site.id, :enabled => true).first || nil
       if !@profile.nil?
         haml :'users/profile', :locals => { :profile => @profile, :site => @site.name, :uuid => @site.uuid }
       else
@@ -377,7 +377,7 @@ module Vellup
       if !@site_user.nil?
         @site_user.destroy
         flash[:info] = "User destroyed!"
-        redirect "/sites/#{site.uuid}/users"
+        redirect "/sites/#{@site.uuid}/users"
       else
         flash[:error] = "User not found."
         redirect "/sites/#{@site.uuid}/users"
