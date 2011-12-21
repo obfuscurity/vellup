@@ -289,15 +289,25 @@ module Vellup
 
     get '/sites/:uuid/?' do
       authenticated?
-      @site = Site.filter(:uuid => params[:uuid], :owner_id => @user.id, :enabled => true).first.values
-      haml :'sites/profile', :locals => { :profile => @site }
+      @site = Site.filter(:uuid => params[:uuid], :owner_id => @user.id, :enabled => true).first.values || nil
+      if !@site.nil?
+        haml :'sites/profile', :locals => { :profile => @site }
+      else
+        flash[:error] = "Site not found."
+        redirect '/sites'
+      end
     end
 
     delete '/sites/:uuid/?' do
       authenticated?
-      Site.filter(:uuid => params[:uuid], :owner_id => @user.id, :enabled => true).first.destroy
-      flash[:info] = "Site destroyed!"
-      redirect "/sites"
+      @site = Site.filter(:uuid => params[:uuid], :owner_id => @user.id, :enabled => true).first || nil
+      if !@site.nil?
+        @site.destroy
+        flash[:info] = "Site destroyed!"
+      else
+        flash[:error] = "Site not found."
+      end
+      redirect '/sites'
     end
 
     get '/sites/:uuid/users/add' do
@@ -327,8 +337,13 @@ module Vellup
     get '/sites/:uuid/users/:id/?' do
       authenticated?
       site_owner?(params[:uuid])
-      @profile = User.filter(:id => params[:id], :site_id => @site.id).first
-      haml :'users/profile', :locals => { :profile => @profile, :site => @site.name, :uuid => @site.uuid }
+      @profile = User.filter(:id => params[:id], :site_id => @site.id).first || nil
+      if !@profile.nil?
+        haml :'users/profile', :locals => { :profile => @profile, :site => @site.name, :uuid => @site.uuid }
+      else
+        flash[:error] = "User not found."
+        redirect "/sites/#{@site.uuid}/users"
+      end
     end
 
     put '/sites/:uuid/users/:id' do
@@ -350,6 +365,7 @@ module Vellup
         flash[:success] = "The user's profile has been updated."
         redirect "/sites/#{@site.uuid}/users/#{@site_user.id}"
       else
+        flash[:error] = "User not found."
         redirect "/sites/#{@site.uuid}/users"
       end
     end
