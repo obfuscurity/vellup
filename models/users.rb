@@ -61,7 +61,7 @@ class User < Sequel::Model
 
   def self.authenticate(args)
     username = args[:username]
-    challenge = args[:challenge]
+    challenge = args[:password]
     site = args[:site]
     user = filter(:username => username, :confirmed => true, :site_id => site, :enabled => true).first
     if user.nil?
