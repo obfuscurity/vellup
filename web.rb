@@ -1,3 +1,4 @@
+
 require "sinatra"
 require "rack-flash"
 require "sinatra/redirect_with_flash"
@@ -59,8 +60,8 @@ module Vellup
       def authenticated?
         has_web_session? or redirect '/login'
       end
-      def site_owner?(site)
-        @site = Site.filter(:name => site, :owner_id => @user.id, :enabled => true).first || nil
+      def site_owner?(site_uuid)
+        @site = Site.filter(:uuid => site_uuid, :owner_id => @user.id, :enabled => true).first || nil
         redirect '/not_found' if @site.nil?
       end
       def has_at_least_one_site?
@@ -277,7 +278,7 @@ module Vellup
       authenticated?
       @site = Site.new(:name => params[:name], :owner_id => @user.id).save
       flash[:success] = "Site created!"
-      redirect "/sites/#{@site.name}"
+      redirect "/sites/#{@site.uuid}"
     end
 
     get '/sites/?' do
@@ -286,60 +287,62 @@ module Vellup
       haml :'sites/list'
     end
 
-    get '/sites/:name/?' do
+    get '/sites/:uuid/?' do
       authenticated?
-      @site = Site.filter(:name => params[:name], :owner_id => @user.id, :enabled => true).first.values
+      @site = Site.filter(:uuid => params[:uuid], :owner_id => @user.id, :enabled => true).first.values
       haml :'sites/profile', :locals => { :profile => @site }
     end
 
-    delete '/sites/:name/?' do
+    delete '/sites/:uuid/?' do
       authenticated?
-      Site.filter(:name => params[:name], :owner_id => @user.id, :enabled => true).first.destroy
+      Site.filter(:uuid => params[:uuid], :owner_id => @user.id, :enabled => true).first.destroy
       flash[:info] = "Site destroyed!"
       redirect "/sites"
     end
 
-    get '/sites/:site/users/add' do
+    get '/sites/:uuid/users/add' do
       authenticated?
-      site_owner?(params[:site])
-      haml :'users/add', :locals => { :view => true, :site => params[:site] }
+      site_owner?(params[:uuid])
+      haml :'users/add', :locals => { :view => true, :site => @site.name, :uuid => @site.uuid }
     end
 
-    post '/sites/:site/users/add' do
+    post '/sites/:uuid/users/add' do
       authenticated?
-      site_owner?(params[:site])
-      params.delete("site")
+      site_owner?(params[:uuid])
+      params.delete("uuid")
       @user = User.new(params.merge({ "site_id" => @site.id, "email" => params[:username], "confirmed" => true }))
       @user.save
       flash[:success] = "User added."
-      redirect "/sites/#{@site.name}/users"
+      redirect "/sites/#{@site.uuid}/users"
     end
 
-    get '/sites/:site/users/?' do
+    get '/sites/:uuid/users/?' do
       authenticated?
-      site_owner?(params[:site])
-      @users = User.from(:users, :sites).where(:users__site_id => :sites__id).where(:sites__name => params[:site]).select("users.*".lit, :sites__name.as(:site)).order(:id).all
+      site_owner?(params[:uuid])
+      @users = User.from(:users, :sites).where(:users__site_id => :sites__id).where(:sites__uuid => params[:uuid]).select("users.*".lit, :sites__name.as(:site), :sites__uuid.as(:site_uuid)).order(:id).all
       flash[:info] = "No users found." if @users.empty?
-      haml :'users/list', :locals => { :users => @users, :site => params[:site] }
+      haml :'users/list', :locals => { :users => @users, :site => @site.name, :uuid => @site.uuid }
     end
 
-    get '/sites/:site/users/:id/?' do
+    get '/sites/:uuid/users/:id/?' do
       authenticated?
-      site_owner?(params[:site])
-      @profile = User.filter(:id => params[:id]).first
-      haml :'users/profile', :locals => { :profile => @profile }
+      site_owner?(params[:uuid])
+      @profile = User.filter(:id => params[:id], :site_id => @site.id).first
+      haml :'users/profile', :locals => { :profile => @profile, :site => @site.name, :uuid => @site.uuid }
     end
 
-    put '/sites/:site/users/:id' do
+    put '/sites/:uuid/users/:id' do
       authenticated?
-      site_owner?(params[:site])
+      site_owner?(params[:uuid])
       "user profile submission"
     end
 
-    delete '/sites/:site/users/:id' do
+    delete '/sites/:uuid/users/:id' do
       authenticated?
-      site_owner?(params[:site])
-      "user delete"
+      site_owner?(params[:uuid])
+      User.filter(:id => params[:id], :site_id => @site.id, :enabled => true).first.destroy
+      flash[:info] = "User destroyed!"
+      redirect "/sites/#{site.uuid}/users"
     end
 
   end
