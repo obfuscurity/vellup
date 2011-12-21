@@ -310,8 +310,8 @@ module Vellup
       authenticated?
       site_owner?(params[:uuid])
       params.delete("uuid")
-      @user = User.new(params.merge({ "site_id" => @site.id, "email" => params[:username], "confirmed" => true }))
-      @user.save
+      @site_user = User.new(params.merge({ "site_id" => @site.id, "email" => params[:username], "confirmed" => true }))
+      @site_user.save
       flash[:success] = "User added."
       redirect "/sites/#{@site.uuid}/users"
     end
@@ -334,7 +334,24 @@ module Vellup
     put '/sites/:uuid/users/:id' do
       authenticated?
       site_owner?(params[:uuid])
-      "user profile submission"
+      @site_user = User.filter(:id => params[:id], :site_id => @site.id, :enabled => true).first || nil
+      if !@site_user.nil?
+        if ((! params[:password1].empty?) || (! params[:password2].empty?))
+          if ((params[:password1] == params[:password2]) and (! params[:password1].empty?))
+            @site_user.update_password(params[:password1])
+          else
+            flash[:error] = "Those passwords don't match. Please try again."
+            redirect "/sites/#{@site.uuid}/users/#{@site_user.id}"
+          end
+        end
+        %w( _method password1 password2 uuid id ).each {|p| params.delete(p)}
+        @site_user.update(params)
+        @site_user.save
+        flash[:success] = "The user's profile has been updated."
+        redirect "/sites/#{@site.uuid}/users/#{@site_user.id}"
+      else
+        redirect "/sites/#{@site.uuid}/users"
+      end
     end
 
     delete '/sites/:uuid/users/:id' do
