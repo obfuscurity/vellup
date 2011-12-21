@@ -6,6 +6,8 @@
 .well
   %a{ :class => "btn default", :href => "/sites/#{profile[:uuid]}/users" } Users
   %a{ :class => "btn primary", :href => "/sites/#{profile[:uuid]}/users/add" } Add User
+
+.well
   %form{ :class => "forceleft", :method => "post" }
     %input{ :type => "hidden", :name => "_method", :value => "delete" }
     %button{ :class => "btn danger", :type => "submit" } Destroy Site
