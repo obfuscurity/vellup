@@ -1,5 +1,8 @@
 
-%h2 User Profile for #{profile[:username]} (Site: #{site})
+- if site
+  %h2 User Profile for #{profile[:username]} (Site: #{site})
+- else
+  %h2 User Profile
 
 %form.form-stacked{ :class => "forceleft", :method => "post" }
   %fieldset
@@ -22,4 +25,8 @@
   .well
     %input{ :type => "hidden", :name => "_method", :value => "put" }
     %button{ :class => "btn primary", :type => "submit" } Update Profile
-    %a{ :class => "btn danger", :href => "/sites/#{uuid}/users/#{profile[:id]}", :name => "_method", :value => "delete" } Destroy User
+- if site
+  %form{ :class => "forceleft", :method => "post" }
+    .well
+      %input{ :type => "hidden", :name => "_method", :value => "delete" }
+      %button{ :class => "btn danger", :type => "submit" } Destroy User
