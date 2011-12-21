@@ -20,6 +20,7 @@ Sequel.migration do
     )
 
     self[:sites].insert(
+      :uuid          => "2d9774c00d9a012f82c6482a143ef0a0",
       :owner_id      => 1,
       :name          => "vellup",
       :enabled       => true,

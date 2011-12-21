@@ -3,6 +3,7 @@ Sequel.migration do
   up do
     create_table(:sites) do
       primary_key :id
+      String      :uuid,          :size => 32, :null => false, :unique => true
       String      :name,          :size => 50, :null => false
       TrueClass   :enabled,                    :null => false, :default => false
       DateTime    :created_at,                 :null => false

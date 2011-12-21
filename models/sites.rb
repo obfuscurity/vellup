@@ -1,10 +1,13 @@
 
+require "uuid"
+
 class Site < Sequel::Model
 
   many_to_one :users
 
   def before_create
     super
+    self.uuid = UUID.generate(format = :compact)
     self.created_at = Time.now
     self.updated_at = Time.now
     self.visited_at = Time.now
@@ -27,6 +30,11 @@ class Site < Sequel::Model
   end
 
   def after_destroy
+  end
+
+  def destroy
+    self.enabled = false
+    self.save
   end
 end
 
