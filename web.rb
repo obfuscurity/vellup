@@ -86,7 +86,7 @@ module Vellup
         flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
         redirect '/profile'
       else
-        @user = User.authenticate(params[:username], params[:password], 1)
+        @user = User.authenticate(params, :site => 1)
         if @user
           start_web_session
           redirect '/sites'

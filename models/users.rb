@@ -59,7 +59,10 @@ class User < Sequel::Model
     BCrypt::Password.create(string, :cost => 10)
   end
 
-  def self.authenticate(username, challenge, site)
+  def self.authenticate(args)
+    username = args[:username]
+    challenge = args[:challenge]
+    site = args[:site]
     user = filter(:username => username, :confirmed => true, :site_id => site, :enabled => true).first
     if user.nil?
       return false
