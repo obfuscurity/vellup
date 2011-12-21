@@ -289,9 +289,9 @@ module Vellup
 
     get '/sites/:uuid/?' do
       authenticated?
-      @site = Site.filter(:uuid => params[:uuid], :owner_id => @user.id, :enabled => true).first.values || nil
+      @site = Site.filter(:uuid => params[:uuid], :owner_id => @user.id, :enabled => true).first || nil
       if !@site.nil?
-        haml :'sites/profile', :locals => { :profile => @site }
+        haml :'sites/profile', :locals => { :profile => @site.values }
       else
         flash[:error] = "Site not found."
         redirect '/sites'
