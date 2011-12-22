@@ -46,58 +46,62 @@ module Vellup
       end
       def site_owner?(site_uuid)
         @site = Site.filter(:uuid => site_uuid, :owner_id => @user.id, :enabled => true).first || nil
-        halt 404 if @site.nil?
+        halt 403 if @site.nil?
       end
     end
 
-    post '/signup' do
-      @user = User.new(params.merge({ 'site_id' => 1, 'email' => params[:username] }))
-      @user.save
-      flash[:info] = 'Please check your inbox for a confirmation email.'
-    end
+#    post '/signup' do
+#      @user = User.new(params.merge({ 'site_id' => 1, 'email' => params[:username] }))
+#      @user.save
+#      status 201, { :message => 'Confirmation instructions sent to your email address' }.to_json
+#    end
 
-    get '/confirm/:token/?' do
-      @user = User.filter(:confirm_token => params[:token], :site_id => 1, :enabled => true, :confirmed => false).first
-      if @user
-        @user.confirm
-        @user.save
-        status 204
-      else
-        halt 404
-      end
-    end
+#    post '/confirm/:token/?' do
+#      @user = User.filter(:confirm_token => params[:token], :site_id => 1, :enabled => true, :confirmed => false).first || nil
+#      if !@user.nil?
+#        if @user.confirmed?
+#          halt 410, { :message => 'User already confirmed' }.to_json
+#        else
+#          @user.confirm
+#          @user.save
+#          status 204
+#        end
+#      else
+#        halt 404, { :message => 'Asset not found' }.to_json
+#      end
+#    end
 
-    post '/confirm' do
-      @user = User.filter(:username => params[:username], :site_id => 1).first
-      if @user
-        if @user.confirmed?
-          halt 400
-        else
-          @user.resend_confirmation
-          status 204
-        end
-      else
-        halt 404
-      end
-    end
+#    get '/confirm/:username' do
+#      @user = User.filter(:username => params[:username], :site_id => 1).first || nil
+#      if !@user.nil?
+#        if @user.confirmed?
+#          halt 410, { :message => 'User already confirmed' }.to_json
+#        else
+#          @user.resend_confirmation
+#          status 204
+#        end
+#      else
+#        halt 404, { :message => 'Asset not found' }.to_json
+#      end
+#    end
 
-    get '/profile/?' do
-      @user.to_json
-    end
+#    get '/profile/?' do
+#      @user.to_json
+#    end
 
-    put '/profile' do
-      if ((! params[:password1].empty?) || (! params[:password2].empty?))
-        if ((params[:password1] == params[:password2]) and (! params[:password1].empty?))
-          @user.update_password(params[:password1])
-        else
-          halt 401
-        end
-      end
-      %w( password1 password2 ).each {|p| params.delete(p)}
-      @user.update(params)
-      @user.save
-      status 204
-    end
+#    put '/profile' do
+#      if ((! params[:password1].empty?) || (! params[:password2].empty?))
+#        if ((params[:password1] == params[:password2]) and (! params[:password1].empty?))
+#          @user.update_password(params[:password1])
+#        else
+#          halt 401
+#        end
+#      end
+#      %w( password1 password2 ).each {|p| params.delete(p)}
+#      @user.update(params)
+#      @user.save
+#      status 204
+#    end
 
     post '/sites/add' do
       @site = Site.new(:name => params[:name], :owner_id => @user.id).save
