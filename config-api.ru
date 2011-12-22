@@ -1,4 +1,4 @@
 $LOAD_PATH.unshift File.dirname(__FILE__)
-require "web"
+require 'api'
 
-run Vellup::Web
+run Vellup::API
