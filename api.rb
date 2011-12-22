@@ -31,7 +31,6 @@ module Vellup
       e = request.env['sinatra.error']
       puts e.to_s
       puts e.backtrace.join("\n")
-      'Application error'
     end
 
     helpers do
@@ -54,13 +53,15 @@ module Vellup
     end
 
 
-    get '/ping' do
-      status 203; @user.values.to_json
-    end
-
     post '/sites/add' do
-      @site = Site.new(:name => params[:name], :owner_id => @user.id).save
-      @site.to_json
+      @site = Site.new(:name => params[:name], :owner_id => @user.id).save || nil
+      if !@site.nil?
+        status 201
+        [:id, :enabled, :visited_at, :owner_id].each {|v| @site.values.delete(v)}
+        @site.values.to_json
+      else
+        halt 400
+      end
     end
 
     get '/sites/?' do
