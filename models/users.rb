@@ -1,6 +1,5 @@
 
 require "bcrypt"
-require "uuid"
 require "resque"
 require "rest_client"
 

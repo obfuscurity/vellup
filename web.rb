@@ -8,7 +8,7 @@ require "newrelic_rpm"
 require "./models/all"
 
 module Vellup
-  class Application < Sinatra::Base
+  class Web < Sinatra::Base
 
     use Rack::Flash, :sweep => true
 

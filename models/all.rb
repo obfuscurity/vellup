@@ -1,4 +1,5 @@
 require "sequel"
+require "uuid"
 
 Sequel.connect(ENV['HEROKU_SHARED_POSTGRESQL_URL'] || "postgres://localhost/vellup")
 

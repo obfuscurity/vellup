@@ -1,6 +1,4 @@
 
-require "uuid"
-
 class Site < Sequel::Model
 
   many_to_one :users
