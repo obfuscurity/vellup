@@ -1,8 +1,9 @@
 
-require "sinatra"
-require "newrelic_rpm"
+require 'sinatra'
+require 'json'
+require 'newrelic_rpm'
 
-require "./models/all"
+require './models/all'
 
 module Vellup
   class API < Sinatra::Base
@@ -10,43 +11,49 @@ module Vellup
     configure do
       enable :logging
       enable :method_override
+      disable :show_exceptions
     end
 
     before do
+      check_api_version!
       authenticate!
+      content_type :json
     end
 
     after do
     end
 
     not_found do
-      json :not_found
+      halt 404
     end
 
     error do
       e = request.env['sinatra.error']
       puts e.to_s
       puts e.backtrace.join("\n")
-      "Application error"
+      'Application error'
     end
 
     helpers do
+      def check_api_version!
+        halt 500 unless request.env['X-API-VERSION'].to_i == 1
+      end
       def has_token?
         true
       end
       def authenticate!
-        has_token? or halt '401'
+        has_token? or halt 401
       end
       def site_owner?(site_uuid)
         @site = Site.filter(:uuid => site_uuid, :owner_id => @user.id, :enabled => true).first || nil
-        halt '404' if @site.nil?
+        halt 404 if @site.nil?
       end
     end
 
     post '/signup' do
-      @user = User.new(params.merge({ "site_id" => 1, "email" => params[:username] }))
+      @user = User.new(params.merge({ 'site_id' => 1, 'email' => params[:username] }))
       @user.save
-      flash[:info] = "Please check your inbox for a confirmation email."
+      flash[:info] = 'Please check your inbox for a confirmation email.'
     end
 
     get '/confirm/:token/?' do
@@ -54,9 +61,9 @@ module Vellup
       if @user
         @user.confirm
         @user.save
-        #flash[:success] = "Your email has been confirmed. You may now login."
+        status 204
       else
-        #flash[:info] = "We were unable to confirm your email.<br />Please check your confirmation link for accuracy."
+        halt 404
       end
     end
 
@@ -64,13 +71,13 @@ module Vellup
       @user = User.filter(:username => params[:username], :site_id => 1).first
       if @user
         if @user.confirmed?
-          #flash[:info] = "This user has already been confirmed. Please login at any time."
+          halt 400
         else
           @user.resend_confirmation
-          #flash[:info] = "Please check your inbox for a new confirmation email."
+          status 204
         end
       else
-        #flash[:error] = "Username not found. Please try again."
+        halt 404
       end
     end
 
@@ -83,18 +90,18 @@ module Vellup
         if ((params[:password1] == params[:password2]) and (! params[:password1].empty?))
           @user.update_password(params[:password1])
         else
-          #flash[:error] = "Those passwords don't match. Please try again."
+          halt 401
         end
       end
       %w( password1 password2 ).each {|p| params.delete(p)}
       @user.update(params)
       @user.save
-      #flash[:success] = "Your profile has been updated."
+      status 204
     end
 
     post '/sites/add' do
       @site = Site.new(:name => params[:name], :owner_id => @user.id).save
-      #flash[:success] = "Site created!"
+      @site.to_json
     end
 
     get '/sites/?' do
@@ -106,7 +113,7 @@ module Vellup
       if !@site.nil?
         @site.to_json
       else
-        #flash[:error] = "Site not found."
+        halt 404
       end
     end
 
@@ -114,25 +121,25 @@ module Vellup
       @site = Site.filter(:uuid => params[:uuid], :owner_id => @user.id, :enabled => true).first || nil
       if !@site.nil?
         @site.destroy
-        #flash[:info] = "Site destroyed!"
+        status 204
       else
-        #flash[:error] = "Site not found."
+        halt 404
       end
     end
 
     post '/sites/:uuid/users/add' do
-      params.delete("uuid")
-      @site_user = User.new(params.merge({ "site_id" => @site.id, "email" => params[:username], "confirmed" => true }))
+      params.delete('uuid')
+      @site_user = User.new(params.merge({ 'site_id' => @site.id, 'email' => params[:username], 'confirmed' => true }))
       @site_user.save
       @site_user.to_json
     end
 
     get '/sites/:uuid/users/?' do
-      @site_users = User.from(:users, :sites).where(:users__site_id => :sites__id, :sites__uuid => params[:uuid], :users__enabled => true).select("users.*".lit, :sites__name.as(:site), :sites__uuid.as(:site_uuid)).order(:id).all
+      @site_users = User.from(:users, :sites).where(:users__site_id => :sites__id, :sites__uuid => params[:uuid], :users__enabled => true).select('users.*'.lit, :sites__name.as(:site), :sites__uuid.as(:site_uuid)).order(:id).all
       if !@site_users.empty?
         @site_users.to_json
       else
-        #flash[:info] = "No users found." if @users.empty?
+        halt 404
       end
     end
 
@@ -141,7 +148,7 @@ module Vellup
       if !@site_user.nil?
         @site_user.to_json
       else
-        #flash[:error] = "User not found."
+        halt 404
       end
     end
 
@@ -152,7 +159,7 @@ module Vellup
           if ((params[:password1] == params[:password2]) and (! params[:password1].empty?))
             @site_user.update_password(params[:password1])
           else
-            #flash[:error] = "Those passwords don't match. Please try again."
+            halt 401
           end
         end
         %w( password1 password2 uuid id ).each {|p| params.delete(p)}
@@ -160,7 +167,7 @@ module Vellup
         @site_user.save
         @site_user.to_json
       else
-        #flash[:error] = "User not found."
+        halt 404
       end
     end
 
@@ -168,9 +175,9 @@ module Vellup
       @site_user = User.filter(:id => params[:id], :site_id => @site.id, :enabled => true).first || nil
       if !@site_user.nil?
         @site_user.destroy
-        #flash[:info] = "User destroyed!"
+        status 204
       else
-        #flash[:error] = "User not found."
+        halt 404
       end
     end
 
