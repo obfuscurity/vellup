@@ -35,7 +35,7 @@ module Vellup
 
     helpers do
       def check_api_version!
-        halt 500 unless request.env['HTTP_X_API_VERSION'].to_i == 1
+        halt 400 unless request.env['HTTP_X_API_VERSION'].to_i == 1
       end
       def authenticate!
         api_token = request.env['HTTP_X_API_TOKEN'] || nil
@@ -65,7 +65,14 @@ module Vellup
     end
 
     get '/sites/?' do
-      @sites.to_json
+      @sites = []
+      Site.select(:uuid, :name, :created_at, :updated_at).filter(:owner_id => @user.id, :enabled => true).all.each {|s| @sites << s.values}
+      if !@sites.empty?
+        status 200
+        @sites.to_json
+      else
+        status 204
+      end
     end
 
     get '/sites/:uuid/?' do
