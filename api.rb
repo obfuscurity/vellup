@@ -76,11 +76,12 @@ module Vellup
     end
 
     get '/sites/:uuid/?' do
-      @site = Site.filter(:uuid => params[:uuid], :owner_id => @user.id, :enabled => true).first || nil
+      @site = Site.select(:uuid, :name, :created_at, :updated_at).filter(:uuid => params[:uuid], :owner_id => @user.id, :enabled => true).first || nil
       if !@site.nil?
-        @site.to_json
+        status 200
+        @site.values.to_json
       else
-        halt 404
+        halt 400
       end
     end
 
