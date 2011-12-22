@@ -10,7 +10,7 @@ module Vellup
 
     configure do
       enable :logging
-      enable :method_override
+      disable :raise_errors
       disable :show_exceptions
     end
 
@@ -36,13 +36,16 @@ module Vellup
 
     helpers do
       def check_api_version!
-        halt 500 unless request.env['X-API-VERSION'].to_i == 1
-      end
-      def has_token?
-        true
+        halt 500 unless request.env['HTTP_X_API_VERSION'].to_i == 1
       end
       def authenticate!
-        has_token? or halt 401
+        api_token = request.env['HTTP_X_API_TOKEN'] || nil
+        if !api_token.nil?
+          @user = User.filter(:api_token => api_token, :enabled => true, :confirmed => true).first || nil
+          halt 401 if @user.nil?
+        else
+          halt 403 if api_token.nil?
+        end
       end
       def site_owner?(site_uuid)
         @site = Site.filter(:uuid => site_uuid, :owner_id => @user.id, :enabled => true).first || nil
@@ -50,58 +53,10 @@ module Vellup
       end
     end
 
-#    post '/signup' do
-#      @user = User.new(params.merge({ 'site_id' => 1, 'email' => params[:username] }))
-#      @user.save
-#      status 201, { :message => 'Confirmation instructions sent to your email address' }.to_json
-#    end
 
-#    post '/confirm/:token/?' do
-#      @user = User.filter(:confirm_token => params[:token], :site_id => 1, :enabled => true, :confirmed => false).first || nil
-#      if !@user.nil?
-#        if @user.confirmed?
-#          halt 410, { :message => 'User already confirmed' }.to_json
-#        else
-#          @user.confirm
-#          @user.save
-#          status 204
-#        end
-#      else
-#        halt 404, { :message => 'Asset not found' }.to_json
-#      end
-#    end
-
-#    get '/confirm/:username' do
-#      @user = User.filter(:username => params[:username], :site_id => 1).first || nil
-#      if !@user.nil?
-#        if @user.confirmed?
-#          halt 410, { :message => 'User already confirmed' }.to_json
-#        else
-#          @user.resend_confirmation
-#          status 204
-#        end
-#      else
-#        halt 404, { :message => 'Asset not found' }.to_json
-#      end
-#    end
-
-#    get '/profile/?' do
-#      @user.to_json
-#    end
-
-#    put '/profile' do
-#      if ((! params[:password1].empty?) || (! params[:password2].empty?))
-#        if ((params[:password1] == params[:password2]) and (! params[:password1].empty?))
-#          @user.update_password(params[:password1])
-#        else
-#          halt 401
-#        end
-#      end
-#      %w( password1 password2 ).each {|p| params.delete(p)}
-#      @user.update(params)
-#      @user.save
-#      status 204
-#    end
+    get '/ping' do
+      status 203; @user.values.to_json
+    end
 
     post '/sites/add' do
       @site = Site.new(:name => params[:name], :owner_id => @user.id).save
