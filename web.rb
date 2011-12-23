@@ -276,7 +276,7 @@ module Vellup
 
     post '/sites/add' do
       authenticated?
-      @site = Site.new(:name => params[:name], :owner_id => @user.id).save
+      @site = Site.new(:name => params[:name], :visited_at => Time.now, :owner_id => @user.id).save
       flash[:success] = "Site created!"
       redirect "/sites/#{@site.uuid}"
     end

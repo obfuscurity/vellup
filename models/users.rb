@@ -16,7 +16,6 @@ class User < Sequel::Model
     self.enabled = true
     self.created_at = Time.now
     self.updated_at = Time.now
-    self.visited_at = Time.now
     self.confirmed_at = Time.now if (self.confirmed == true)
     self.password = encrypt_password(self.password)
     self.api_token = UUID.generate
