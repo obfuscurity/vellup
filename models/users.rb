@@ -7,6 +7,8 @@ class User < Sequel::Model
 
   one_to_many :sites
 
+  plugin :boolean_readers
+
   Resque.redis = ENV['REDISTOGO_URL']
 
   def before_create
@@ -83,10 +85,6 @@ class User < Sequel::Model
     self.confirmed_at = Time.now
     self.updated_at = Time.now
     Resque.enqueue(Email, minimal_user_data, :confirmed)
-  end
-
-  def confirmed?
-    self.confirmed
   end
 
   def send_password_change_request

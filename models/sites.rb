@@ -3,6 +3,8 @@ class Site < Sequel::Model
 
   many_to_one :users
 
+  plugin :boolean_readers
+
   def before_create
     super
     self.uuid = UUID.generate(format = :compact)
@@ -28,10 +30,6 @@ class Site < Sequel::Model
   end
 
   def after_destroy
-  end
-
-  def enabled?
-    self.enabled
   end
 
   def destroy
