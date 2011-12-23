@@ -29,7 +29,6 @@ class User < Sequel::Model
   def before_update
     super
     self.updated_at = Time.now
-    self.visited_at = Time.now
   end
 
   def after_update
