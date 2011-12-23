@@ -30,6 +30,10 @@ class Site < Sequel::Model
   def after_destroy
   end
 
+  def enabled?
+    self.enabled
+  end
+
   def destroy
     self.enabled = false
     self.save
