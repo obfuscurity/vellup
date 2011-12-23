@@ -82,7 +82,7 @@ module Vellup
           status 200
           @site.values.to_json
         else
-          halt 410
+          halt 410, 'Site has already been destroyed'
         end
       else
         halt 404
@@ -96,7 +96,7 @@ module Vellup
           @site.destroy
           status 204
         else
-          halt 410
+          halt 410, 'Site has already been destroyed'
         end
       else
         halt 404
@@ -104,18 +104,30 @@ module Vellup
     end
 
     post '/sites/:uuid/users/add' do
-      params.delete('uuid')
-      @site_user = User.new(params.merge({ 'site_id' => @site.id, 'email' => params[:username], 'confirmed' => true }))
-      @site_user.save
-      @site_user.to_json
+      @site = Site.filter(:uuid => params[:uuid], :owner_id => @user.id, :enabled => true).first || nil
+      if !@site.nil?
+        params.delete('uuid')
+        @site_user = User.new(params.merge({ 'site_id' => @site.id, 'email' => params[:username], 'confirmed' => true })).save || nil
+        if !@site_user.nil?
+          [:id, :password, :email, :api_token, :confirm_token, :email_is_username, :enabled, :site_id].each {|v| @site_user.values.delete(v)}
+          status 201
+          @site_user.values.to_json
+        else
+          halt 400
+        end
+      else
+        halt 412, 'Site does not exist'
+      end
     end
 
     get '/sites/:uuid/users/?' do
-      @site_users = User.from(:users, :sites).where(:users__site_id => :sites__id, :sites__uuid => params[:uuid], :users__enabled => true).select('users.*'.lit, :sites__name.as(:site), :sites__uuid.as(:site_uuid)).order(:id).all
+      @site_users = []
+      User.select(:users__username, :users__firstname, :users__lastname, :users__confirmed, :users__created_at, :users__updated_at, :users__confirmed_at, :users__authenticated_at, :users__visited_at).from(:users, :sites).where(:users__site_id => :sites__id, :sites__uuid => params[:uuid], :sites__enabled => true, :users__enabled => true).order(:users__id).all.each {|u| @site_users << u.values}
       if !@site_users.empty?
+        status 200
         @site_users.to_json
       else
-        halt 404
+        status 204
       end
     end
 
