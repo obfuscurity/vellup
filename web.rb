@@ -229,14 +229,11 @@ module Vellup
       else
         @user = User.filter(:confirm_token => params[:token], :site_id => 1).first
         if @user
-          p @user
           if ((params[:password1] == params[:password2]) and (!params[:password1].empty?))
-            p "HERE 1"
             @user.update_password(params[:password1])
             flash[:success] = "Your password has been successfully changed."
             redirect '/login'
           else
-            p "HERE 2"
             flash[:error] = "Those passwords don't match. Please try again."
             haml :'users/reset_password', :locals => { :show_reset_form => true }
           end
@@ -266,6 +263,13 @@ module Vellup
       @user.update(params)
       @user.save
       flash[:success] = "Your profile has been updated."
+      redirect '/profile'
+    end
+
+    post '/reset-token' do
+      authenticated?
+      @user.reset_api_token
+      flash[:success] = "Your API token has been reset."
       redirect '/profile'
     end
 

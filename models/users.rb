@@ -97,6 +97,11 @@ class User < Sequel::Model
     self.confirm_token = UUID.generate
     self.save
   end
+
+  def reset_api_token
+    self.api_token = UUID.generate
+    self.save
+  end
 end
 
 module Email

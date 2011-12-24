@@ -30,3 +30,13 @@
     .well
       %input{ :type => "hidden", :name => "_method", :value => "delete" }
       %button{ :class => "btn danger", :type => "submit" } Destroy User
+- else
+  %h2 Developer Tools
+  %form.form-stacked{ :class => "forceleft", :method => "post", :action => "/reset-token" }
+    %fieldset
+      .clearfix
+        %label{ :for => "api_token" } API Token:
+        .input
+          %input{ :class => "xlarge disabled", :id => "api_token", :name => "api_token", :value => profile[:api_token] }
+    .well
+      %button{ :class => "btn danger", :type => "submit" } Reset API Token
