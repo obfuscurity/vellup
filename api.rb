@@ -12,6 +12,7 @@ module Vellup
       enable :logging
       disable :raise_errors
       disable :show_exceptions
+      set :port, ENV['PORT'] || 4568
     end
 
     before do
