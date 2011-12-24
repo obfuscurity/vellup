@@ -18,6 +18,7 @@ module Vellup
       enable :sessions
       set :session_secret, 'o28fKzX7qP0fr7C'
       set :haml, :format => :html5
+      set :port, ENV['PORT'] || 4567
     end
 
     before do
