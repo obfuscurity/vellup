@@ -1,7 +1,7 @@
 
-require "bcrypt"
-require "resque"
-require "rest_client"
+require 'bcrypt'
+require 'resque'
+require 'rest_client'
 
 class User < Sequel::Model
 
@@ -109,27 +109,27 @@ module Email
   @queue = :outbound
 
   def send_email_to(user, subject, message)
-    RestClient.post ENV['MAILGUN_API_URL'] + "/messages",
-                    :from    => "support@vellup.com",
+    RestClient.post ENV['MAILGUN_API_URL'] + '/messages',
+                    :from    => 'support@vellup.com',
                     :to      => "#{user['firstname'].capitalize} #{user['lastname'].capitalize} <#{user['email']}>",
                     :subject => subject,
                     :text    => message
   end
 
   def perform(user, action)
-    subject = message = ""
+    subject = message = ''
     if user
-      if (action == "confirmation")
-        subject = "Vellup Confirmation"
-        message = "Click the following link to complete your registration:\n" +
+      if (action == 'confirmation')
+        subject = 'Vellup Confirmation'
+        message = 'Click the following link to complete your registration:\n' +
                   "http://127.0.0.1:4567/confirm/#{user['confirm_token']}"
-      elsif (action == "confirmed")
-        subject = "Welcome to Vellup"
-        message = "You are now registered for Vellup! Get started here:\n" +
-                     "http://127.0.0.1:4567/login"
-      elsif (action == "resetpassword")
-        subject = "Vellup Password Change"
-        message = "Click the following link to change your password:\n" +
+      elsif (action == 'confirmed')
+        subject = 'Welcome to Vellup'
+        message = 'You are now registered for Vellup! Get started here:\n' +
+                     'http://127.0.0.1:4567/login'
+      elsif (action == 'resetpassword')
+        subject = 'Vellup Password Change'
+        message = 'Click the following link to change your password:\n' +
                   "http://127.0.0.1:4567/reset-password/#{user['confirm_token']}"
       end
     end

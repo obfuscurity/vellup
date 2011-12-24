@@ -30,7 +30,7 @@ module Vellup
     error do
       e = request.env['sinatra.error']
       puts e.to_s
-      puts e.backtrace.join("\n")
+      puts e.backtrace.join('\n')
     end
 
     helpers do
