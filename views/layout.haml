@@ -21,12 +21,16 @@
               %li
                 %a{ :href => "/profile" } Profile
               %li
+                %a{ :href => "/api" } API Docs
+              %li
                 %a{ :href => "/logout" } Logout
             - else
               %li
                 %a{ :href => "/login" } Login
               %li
                 %a{ :href => "/signup" } Signup
+              %li
+                %a{ :href => "/api" } API Docs
 
     %div{ :class => "flash container" }
       - if flash[:error]

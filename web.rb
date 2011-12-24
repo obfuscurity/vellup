@@ -72,6 +72,10 @@ module Vellup
       end
     end
 
+    get '/api' do
+      haml :api
+    end
+
     get '/login/?' do
       if has_web_session?
         flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
