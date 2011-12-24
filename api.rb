@@ -153,7 +153,7 @@ module Vellup
         if !@site_user.nil?
           if !params[:password].nil?
             if !params[:password].empty?
-              @site_user.update_password(params[:password1])
+              @site_user.update_password(params[:password])
             else
               halt 400, { :message => 'Password cannot be an empty string' }.to_json
             end
@@ -185,6 +185,22 @@ module Vellup
           end
         else
           halt 404, { :message => 'User not found' }.to_json
+        end
+      else
+        halt 404, { :message => 'Site not found' }.to_json
+      end
+    end
+
+    post '/sites/:uuid/users/:id/auth' do
+      @site = Site.filter(:uuid => params[:uuid], :owner_id => @user.id, :enabled => true).first || nil
+      if !@site.nil?
+        @site_user = User.authenticate(params.merge({ :site => @site.id  })) || nil
+        if !@site_user.nil?
+          status 200
+          [ :password, :email, :api_token, :confirm_token, :email_is_username, :enabled, :site_id ].each {|k| @site_user.values.delete(k)}
+          @site_user.values.to_json
+        else
+          halt 401, { :message => 'Authentication failed' }.to_json
         end
       else
         halt 404, { :message => 'Site not found' }.to_json
