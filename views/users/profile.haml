@@ -1,8 +1,8 @@
 
 - if site
-  %h2 User Profile for #{profile[:username]} (Site: #{site})
+  %h1 User Profile for #{profile[:username]} (Site: #{site})
 - else
-  %h2 User Profile
+  %h1 User Profile
 
 %form.form-stacked{ :class => "forceleft", :method => "post" }
   %fieldset
