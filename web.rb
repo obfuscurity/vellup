@@ -23,7 +23,8 @@ module Vellup
 
     before do
       if has_web_session?
-        @user = User.filter(:username => session[:user], :site_id => 1).first
+        ds = User.filter(:username => :$u, :site_id => :$s)
+        @user = ds.call(:first, :u => session[:user], :s => 1)
         @sites = Site.filter(:owner_id => @user.id, :enabled => true).order_by(:created_at.asc).all
       else
         @next_url = params[:next_url] || request.path
