@@ -46,7 +46,7 @@ class User < Sequel::Model
   end
 
   def self.username_collision?(args)
-    user = filter(:username => args[:username], :site_id => args[:site_id]).first || nil
+    user = filter(:username => :$u, :site_id => :$s).call(:first, :u => args[:username], :s => args[:site_id]) || nil
     user.nil? ? false : true
   end
 
@@ -67,7 +67,7 @@ class User < Sequel::Model
     username = args[:username]
     challenge = args[:password]
     site = args[:site]
-    user = filter(:username => username, :confirmed => true, :site_id => site, :enabled => true).first
+    user = filter(:username => :$u, :site_id => :$s, :confirmed => true, :enabled => true).call(:first, :u => username, :s => site) || nil
     if user.nil?
       return false
     else

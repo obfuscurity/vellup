@@ -23,8 +23,7 @@ module Vellup
 
     before do
       if has_web_session?
-        ds = User.filter(:username => :$u, :site_id => :$s)
-        @user = ds.call(:first, :u => session[:user], :s => 1)
+        @user = User.filter(:username => :$u, :site_id => :$s).call(:first, :u => session[:user], :s => 1)
         @sites = Site.filter(:owner_id => @user.id, :enabled => true).order_by(:created_at.asc).all
       else
         @next_url = params[:next_url] || request.path
@@ -125,10 +124,15 @@ module Vellup
         flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
         redirect '/profile'
       else
-        @user = User.new(params.merge({ 'site_id' => 1, 'email' => params[:username] }))
-        @user.save
-        flash[:info] = 'Please check your inbox for a confirmation email.'
-        redirect '/login'
+        if !User.username_collision?({ :username => params[:username], :site_id => 1 })
+          @user = User.new(params.merge({ 'site_id' => 1, 'email' => params[:username] }))
+          @user.save
+          flash[:info] = 'Please check your inbox for a confirmation email.'
+          redirect '/login'
+        else
+          flash[:error] = 'This username is taken, please choose another.'
+          redirect '/signup'
+        end
       end
     end
 
