@@ -5,7 +5,9 @@
   - @users.each do |user|
     %li
       %a{ :href => "/sites/#{user[:site_uuid]}/users/#{user[:id]}" }
-        #{user[:firstname].capitalize} #{user[:lastname].capitalize}
+        #{user[:username]}
+      - if !(user[:firstname] + user[:lastname]).empty?
+        ( #{user[:firstname].capitalize} #{user[:lastname].capitalize} )
 
 .well
   %a{ :class => "btn primary", :href => "/sites/#{uuid}/users/add" } Add User
