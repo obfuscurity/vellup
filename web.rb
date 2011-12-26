@@ -328,10 +328,19 @@ module Vellup
       authenticated?
       site_owner?(params[:uuid])
       params.delete('uuid')
-      @site_user = User.new(params.merge({ 'site_id' => @site.id, 'email' => params[:username], 'confirmed' => true }))
-      @site_user.save
-      flash[:success] = 'User added.'
-      redirect "/sites/#{@site.uuid}/users"
+      if !User.username_collision?({ :username => params[:username], :site_id => @site.id })
+        @site_user = User.new(params.merge({ 'site_id' => @site.id, 'email' => params[:username], 'confirmed' => true })).save || nil
+        if !@site_user.nil?
+          flash[:success] = 'User added.'
+          redirect "/sites/#{@site.uuid}/users"
+        else
+          flash[:error] = 'Something happened, we should raise an exception here.'
+          redirect "/sites/#{@site.uuid}/users/add"
+        end
+      else
+        flash[:error] = 'This username is taken, please choose another.'
+        redirect "/sites/#{@site.uuid}/users/add"
+      end
     end
 
     get '/sites/:uuid/users/?' do

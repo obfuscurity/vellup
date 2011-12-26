@@ -45,6 +45,11 @@ class User < Sequel::Model
     self.save
   end
 
+  def self.username_collision?(args)
+    user = filter(:username => args[:username], :site_id => args[:site_id]).first || nil
+    user.nil? ? false : true
+  end
+
   def minimal_user_data
     data = {}
     data[:firstname] = self.firstname
