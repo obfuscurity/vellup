@@ -123,19 +123,20 @@ module Email
 
   def perform(user, action)
     subject = message = ''
+    base_url = ENV['APP_URL'] || 'http://127.0.0.1:4567'
     if user
       if (action == 'confirmation')
         subject = 'Vellup Confirmation'
-        message = 'Click the following link to complete your registration:\n' +
-                  "http://127.0.0.1:4567/confirm/#{user['confirm_token']}"
+        message = "Click the following link to complete your registration:\n" +
+                  "#{base_url}/confirm/#{user['confirm_token']}"
       elsif (action == 'confirmed')
         subject = 'Welcome to Vellup'
-        message = 'You are now registered for Vellup! Get started here:\n' +
-                     'http://127.0.0.1:4567/login'
+        message = "You are now registered for Vellup! Get started here:\n" +
+                     "#{base_url}/login"
       elsif (action == 'resetpassword')
         subject = 'Vellup Password Change'
-        message = 'Click the following link to change your password:\n' +
-                  "http://127.0.0.1:4567/reset-password/#{user['confirm_token']}"
+        message = "Click the following link to change your password:\n" +
+                  "#{base_url}/reset-password/#{user['confirm_token']}"
       end
     end
     send_email_to(user, subject, message)
