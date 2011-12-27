@@ -2,6 +2,7 @@
 require 'sinatra'
 require 'rack-flash'
 require 'sinatra/redirect_with_flash'
+require 'rfc822'
 require 'haml'
 require 'newrelic_rpm'
 
@@ -125,11 +126,15 @@ module Vellup
         redirect '/profile'
       else
         if !User.username_collision?({ :username => params[:username], :site_id => 1 })
-          # XXX Need to implement model-level prepared statements for escaping user input
-          #@user = User.new(:username => :$u, :email => :$e, :site_id => 1).call(:u => params[:username], :e => params[:username]).save
-          @user = User.new(params.merge({ 'site_id' => 1, 'email' => params[:username] })).save
-          flash[:info] = 'Please check your inbox for a confirmation email.'
-          redirect '/login'
+          if params[:username].is_email?
+            # XXX Need to implement model-level prepared statements for escaping user input
+            @user = User.new(params.merge({ 'site_id' => 1, 'email' => params[:username] })).save
+            flash[:info] = 'Please check your inbox for a confirmation email.'
+            redirect '/login'
+          else
+            flash[:error] = 'Username must be a valid email address ( per <a href="http://www.ietf.org/rfc/rfc2822.txt">RFC2822</a> ). Please try again.'
+            redirect '/signup'
+          end
         else
           flash[:error] = 'This username is taken, please choose another.'
           redirect '/signup'
@@ -292,7 +297,6 @@ module Vellup
     post '/sites/add' do
       authenticated?
       # XXX Need to implement model-level prepared statements for escaping user input
-      #@site = Site.new(:name => :$n, :visited_at => Time.now, :owner_id => @user.id).call(:n => params[:name]).save
       @site = Site.new(:name => params[:name], :visited_at => Time.now, :owner_id => @user.id).save
       flash[:success] = 'Site created!'
       redirect "/sites/#{@site.uuid}"
@@ -338,13 +342,18 @@ module Vellup
       site_owner?(params[:uuid])
       params.delete('uuid')
       if !User.username_collision?({ :username => params[:username], :site_id => @site.id })
-        # XXX Need to implement model-level prepared statements for escaping user input
-        @site_user = User.new(params.merge({ 'site_id' => @site.id, 'email' => params[:username], 'confirmed' => true })).save || nil
-        if !@site_user.nil?
-          flash[:success] = 'User added.'
-          redirect "/sites/#{@site.uuid}/users"
+        if params[:username].is_email?
+          # XXX Need to implement model-level prepared statements for escaping user input
+          @site_user = User.new(params.merge({ 'site_id' => @site.id, 'email' => params[:username], 'confirmed' => true })).save || nil
+          if !@site_user.nil?
+            flash[:success] = 'User added.'
+            redirect "/sites/#{@site.uuid}/users"
+          else
+            flash[:error] = 'Something happened, we should raise an exception here.'
+            redirect "/sites/#{@site.uuid}/users/add"
+          end
         else
-          flash[:error] = 'Something happened, we should raise an exception here.'
+          flash[:error] = 'Username must be a valid email address ( per <a href="http://www.ietf.org/rfc/rfc2822.txt">RFC2822</a> ). Please try again.'
           redirect "/sites/#{@site.uuid}/users/add"
         end
       else
