@@ -201,7 +201,7 @@ module Vellup
       end
     end
 
-    post '/sites/:uuid/users/:id/auth' do
+    post '/sites/:uuid/users/auth' do
       @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
       if !@site.nil?
         @site_user = User.authenticate(params.merge({ :site => @site.id  })) || nil
