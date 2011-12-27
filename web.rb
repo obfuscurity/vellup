@@ -61,7 +61,7 @@ module Vellup
         has_web_session? or redirect '/login'
       end
       def site_owner?(site_uuid)
-        @site = Site.filter(:uuid => site_uuid, :owner_id => @user.id, :enabled => true).first || nil
+        @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => site_uuid) || nil
         redirect '/not_found' if @site.nil?
       end
       def has_at_least_one_site?
@@ -125,8 +125,9 @@ module Vellup
         redirect '/profile'
       else
         if !User.username_collision?({ :username => params[:username], :site_id => 1 })
-          @user = User.new(params.merge({ 'site_id' => 1, 'email' => params[:username] }))
-          @user.save
+          # XXX Need to implement model-level prepared statements for escaping user input
+          #@user = User.new(:username => :$u, :email => :$e, :site_id => 1).call(:u => params[:username], :e => params[:username]).save
+          @user = User.new(params.merge({ 'site_id' => 1, 'email' => params[:username] })).save
           flash[:info] = 'Please check your inbox for a confirmation email.'
           redirect '/login'
         else
@@ -141,7 +142,7 @@ module Vellup
         flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
         redirect '/profile'
       else
-        @user = User.filter(:confirm_token => params[:token], :site_id => 1, :enabled => true, :confirmed => false).first
+        @user = User.filter(:confirm_token => :$t, :site_id => 1, :enabled => true, :confirmed => false).call(:first, :t => params[:token])
         if @user
           @user.confirm
           @user.save
@@ -168,7 +169,7 @@ module Vellup
         flash[:info] = 'Do you want to resend confirmation for a different user? If so, please logout and try again.'
         redirect '/profile'
       else
-        @user = User.filter(:username => params[:username], :site_id => 1).first
+        @user = User.filter(:username => :$u, :site_id => 1).call(:first, :u => params[:username])
         if @user
           if @user.confirmed?
             flash[:info] = 'This user has already been confirmed. Please login at any time.'
@@ -199,7 +200,7 @@ module Vellup
         flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
         redirect '/profile'
       else
-        @user = User.filter(:username => params[:username], :site_id => 1).first
+        @user = User.filter(:username => :$u, :site_id => 1).call(:first, :u => params[:username])
         if @user
           if @user.confirmed?
             @user.send_password_change_request
@@ -221,7 +222,7 @@ module Vellup
         flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
         redirect '/profile'
       else
-        @user = User.filter(:confirm_token => params[:token], :site_id => 1).first
+        @user = User.filter(:confirm_token => :$t, :site_id => 1).call(:first, :t => params[:token])
         if @user
           haml :'users/reset_password', :locals => { :show_reset_form => true }
         else
@@ -236,7 +237,7 @@ module Vellup
         flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
         redirect '/profile'
       else
-        @user = User.filter(:confirm_token => params[:token], :site_id => 1).first
+        @user = User.filter(:confirm_token => :$t, :site_id => 1).call(:first, :t => params[:token])
         if @user
           if ((params[:password1] == params[:password2]) and (!params[:password1].empty?))
             @user.update_password(params[:password1])
@@ -268,6 +269,7 @@ module Vellup
           redirect '/profile'
         end
       end
+      # XXX This will go away once we support custom json schemas
       %w( _method password1 password2 ).each {|p| params.delete(p)}
       @user.update(params)
       @user.save
@@ -289,6 +291,8 @@ module Vellup
 
     post '/sites/add' do
       authenticated?
+      # XXX Need to implement model-level prepared statements for escaping user input
+      #@site = Site.new(:name => :$n, :visited_at => Time.now, :owner_id => @user.id).call(:n => params[:name]).save
       @site = Site.new(:name => params[:name], :visited_at => Time.now, :owner_id => @user.id).save
       flash[:success] = 'Site created!'
       redirect "/sites/#{@site.uuid}"
@@ -302,7 +306,7 @@ module Vellup
 
     get '/sites/:uuid/?' do
       authenticated?
-      @site = Site.filter(:uuid => params[:uuid], :owner_id => @user.id, :enabled => true).first || nil
+      @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
       if !@site.nil?
         haml :'sites/profile', :locals => { :profile => @site.values }
       else
@@ -313,7 +317,7 @@ module Vellup
 
     delete '/sites/:uuid/?' do
       authenticated?
-      @site = Site.filter(:uuid => params[:uuid], :owner_id => @user.id, :enabled => true).first || nil
+      @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
       if !@site.nil?
         @site.destroy
         flash[:info] = 'Site destroyed!'
@@ -334,6 +338,7 @@ module Vellup
       site_owner?(params[:uuid])
       params.delete('uuid')
       if !User.username_collision?({ :username => params[:username], :site_id => @site.id })
+        # XXX Need to implement model-level prepared statements for escaping user input
         @site_user = User.new(params.merge({ 'site_id' => @site.id, 'email' => params[:username], 'confirmed' => true })).save || nil
         if !@site_user.nil?
           flash[:success] = 'User added.'
@@ -351,7 +356,7 @@ module Vellup
     get '/sites/:uuid/users/?' do
       authenticated?
       site_owner?(params[:uuid])
-      @users = User.from(:users, :sites).where(:users__site_id => :sites__id, :sites__uuid => params[:uuid], :users__enabled => true).select('users.*'.lit, :sites__name.as(:site), :sites__uuid.as(:site_uuid)).order(:id).all
+      @users = User.select('users.*'.lit, :sites__name.as(:site), :sites__uuid.as(:site_uuid)).from(:users, :sites).where(:users__site_id => :sites__id, :sites__uuid => :$u, :users__enabled => true).order(:id).call(:all, :u => params[:uuid])
       flash[:info] = 'No users found.' if @users.empty?
       haml :'users/list', :locals => { :users => @users, :site => @site.name, :uuid => @site.uuid }
     end
@@ -359,7 +364,7 @@ module Vellup
     get '/sites/:uuid/users/:id/?' do
       authenticated?
       site_owner?(params[:uuid])
-      @profile = User.filter(:id => params[:id], :site_id => @site.id, :enabled => true).first || nil
+      @profile = User.filter(:id => :$i, :site_id => @site.id, :enabled => true).call(:first, :i => params[:id]) || nil
       if !@profile.nil?
         haml :'users/profile', :locals => { :profile => @profile, :site => @site.name, :uuid => @site.uuid }
       else
@@ -371,7 +376,7 @@ module Vellup
     put '/sites/:uuid/users/:id' do
       authenticated?
       site_owner?(params[:uuid])
-      @site_user = User.filter(:id => params[:id], :site_id => @site.id, :enabled => true).first || nil
+      @site_user = User.filter(:id => :$i, :site_id => @site.id, :enabled => true).call(:first, :i => params[:id]) || nil
       if !@site_user.nil?
         if ((! params[:password1].empty?) || (! params[:password2].empty?))
           if ((params[:password1] == params[:password2]) and (! params[:password1].empty?))
@@ -381,6 +386,7 @@ module Vellup
             redirect "/sites/#{@site.uuid}/users/#{@site_user.id}"
           end
         end
+        # XXX This will go away once we support custom json schemas
         %w( _method password1 password2 uuid id ).each {|p| params.delete(p)}
         @site_user.update(params)
         @site_user.save
@@ -395,7 +401,7 @@ module Vellup
     delete '/sites/:uuid/users/:id' do
       authenticated?
       site_owner?(params[:uuid])
-      @site_user = User.filter(:id => params[:id], :site_id => @site.id, :enabled => true).first || nil
+      @site_user = User.filter(:id => :$i, :site_id => @site.id, :enabled => true).call(:first, :i => params[:id]) || nil
       if !@site_user.nil?
         @site_user.destroy
         flash[:info] = 'User destroyed!'
