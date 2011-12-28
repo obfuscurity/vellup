@@ -5,6 +5,7 @@ Sequel.migration do
       primary_key :id
       String      :uuid,          :size => 32, :null => false, :unique => true
       String      :name,          :size => 50, :null => false
+      String      :schema,                     :null => true,  :text => true
       TrueClass   :enabled,                    :null => false, :default => false
       DateTime    :created_at,                 :null => false
       DateTime    :updated_at,                 :null => false
@@ -16,8 +17,7 @@ Sequel.migration do
       String      :username,      :size => 60, :null => false
       String      :password,      :size => 80, :null => false
       String      :email,         :size => 60, :null => false
-      String      :firstname,     :size => 20, :null => false
-      String      :lastname,      :size => 40, :null => false
+      String      :custom,                     :null => true,  :text => true
       String      :api_token,     :size => 40, :null => false
       String      :confirm_token, :size => 40, :null => false
       TrueClass   :email_is_username,          :null => false, :default => true
