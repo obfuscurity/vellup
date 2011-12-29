@@ -129,6 +129,7 @@ module Vellup
           if params[:username].is_email?
             # XXX Need to implement model-level prepared statements for escaping user input
             @user = User.new(params.merge({ 'site_id' => 1, 'email' => params[:username] })).save
+            @user.send_confirmation_email
             flash[:info] = 'Please check your inbox for a confirmation email.'
             redirect '/login'
           else
@@ -151,6 +152,7 @@ module Vellup
         if @user
           @user.confirm
           @user.save
+          @user.send_welcome_email
           flash[:success] = 'Your email has been confirmed. You may now login.'
           redirect '/login'
         else
@@ -180,7 +182,7 @@ module Vellup
             flash[:info] = 'This user has already been confirmed. Please login at any time.'
             redirect '/login'
           else
-            @user.resend_confirmation
+            @user.send_confirmation_email
             flash[:info] = 'Please check your inbox for a new confirmation email.'
             redirect '/login'
           end
@@ -208,7 +210,7 @@ module Vellup
         @user = User.filter(:username => :$u, :site_id => 1).call(:first, :u => params[:username])
         if @user
           if @user.confirmed?
-            @user.send_password_change_request
+            @user.send_password_change_request_email
             flash[:info] = 'Please check your inbox for directions to reset your password.'
             redirect '/login'
           else
