@@ -122,6 +122,16 @@
 
 %h2 Add new user for a site
 
+%p By default, adding a user with this endpoint assumes that the user account is confirmed and no further verification is necessary. If you want to force email verification by the user, set the <strong>confirmed</strong> and <strong>send_confirmation_email</strong> parameters accordingly.
+
+%h3 Optional Parameters
+
+%dl
+  %dt confirmed=false
+  %dd Set the user as confirmed without any further action. (<i>Default:</i> true)
+  %dt send_confirmation_email=true
+  %dd Send the user a standard Vellup confirmation email. Ignored where <b>confirmed=true</b>. (<i>Default:</i> false)
+
 %h3 Request
 
 %blockquote
