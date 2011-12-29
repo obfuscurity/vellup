@@ -23,7 +23,6 @@ class User < Sequel::Model
   end
 
   def after_create
-    Resque.enqueue(Email, minimal_user_data, :confirmation) unless (self.confirmed == true)
   end
 
   def before_update
@@ -79,18 +78,21 @@ class User < Sequel::Model
     end
   end
 
-  def resend_confirmation
+  def send_confirmation_email
     Resque.enqueue(Email, minimal_user_data, :confirmation)
+  end
+
+  def send_welcome_email
+    Resque.enqueue(Email, minimal_user_data, :welcome)
   end
 
   def confirm
     self.confirmed = true
     self.confirmed_at = Time.now
     self.updated_at = Time.now
-    Resque.enqueue(Email, minimal_user_data, :confirmed)
   end
 
-  def send_password_change_request
+  def send_password_change_request_email
     self.confirm_token = UUID.generate
     self.save
     Resque.enqueue(Email, minimal_user_data, :resetpassword)
@@ -129,7 +131,7 @@ module Email
         subject = 'Vellup Confirmation'
         message = "Click the following link to complete your registration:\n" +
                   "#{base_url}/confirm/#{user['confirm_token']}"
-      elsif (action == 'confirmed')
+      elsif (action == 'welcome')
         subject = 'Welcome to Vellup'
         message = "You are now registered for Vellup! Get started here:\n" +
                      "#{base_url}/login"
