@@ -106,19 +106,51 @@ module Vellup
     post '/sites/:uuid/users/add' do
       @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
       if !@site.nil?
-        if params[:username].is_email?
-          params.delete('uuid')
-          # XXX Need to implement model-level prepared statements for escaping user input
-          @site_user = User.new(params.merge({ 'site_id' => @site.id, 'email' => params[:username], 'confirmed' => true })).save || nil
-          if !@site_user.nil?
-            [:password, :email, :api_token, :confirm_token, :email_is_username, :enabled, :site_id].each {|v| @site_user.values.delete(v)}
-            status 201
-            @site_user.values.to_json
+        if !User.username_collision?({ :username => params[:username], :site_id => @site.id })
+          if params[:username].is_email?
+            confirmed = params[:confirmed] == 'false' ? false : true
+            send_confirmation_email = params[:send_confirmation_email] == 'true' ? true : false
+            %w( uuid confirmed send_confirmation_email ).each {|p| params.delete(p)}
+            # XXX Need to implement model-level prepared statements for escaping user input
+            p params
+            @site_user = User.new(params.merge({ 'site_id' => @site.id, 'email' => params[:username], 'confirmed' => confirmed })).save || nil
+            p @site_user
+            if !@site_user.nil?
+              @site_user.send_confirmation_email if send_confirmation_email
+              [:password, :email, :api_token, :email_is_username, :enabled, :site_id].each {|v| @site_user.values.delete(v)}
+              @site_user.values.delete(:confirm_token) if confirmed
+              status 201
+              @site_user.values.to_json
+            else
+              halt 400
+            end
           else
-            halt 400
+            halt 400, { :message => 'Invalid username/email format, see RFC822' }.to_json
           end
         else
-          halt 400, { :message => 'Invalid username/email format, see RFC822' }.to_json
+          halt 410, { :message => 'Username already taken' }.to_json
+        end
+      else
+        halt 404, { :message => 'Site not found' }.to_json
+      end
+    end
+
+    post '/sites/:uuid/users/confirm' do
+      @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
+      if !@site.nil?
+        @site_user = User.filter(:confirm_token => :$t, :site_id => @site.id, :enabled => true).call(:first, :t => params[:confirm_token])
+        if !@site_user.nil?
+          if !@site_user.confirmed?
+            @site_user.confirm
+            @site_user.save
+            [:password, :email, :api_token, :confirm_token, :email_is_username, :enabled, :site_id].each {|v| @site_user.values.delete(v)}
+            status 200
+            @site_user.values.to_json
+          else
+            halt 304
+          end
+        else
+          halt 404, { :message => 'User not found' }.to_json
         end
       else
         halt 404, { :message => 'Site not found' }.to_json
