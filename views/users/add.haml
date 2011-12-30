@@ -3,6 +3,7 @@
   %h1 Signup
 - else
   %h1 Add User for #{site}
+  %p Note that any users added using the web form will immediately be enabled and verified. If you wish to require validation by the user, you must use the <a href="/api">API</a>.
 
 %form.form-stacked{ :class => "forceleft", :method => "post" }
   %fieldset
