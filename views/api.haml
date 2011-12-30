@@ -128,11 +128,11 @@
 
 %dl
   %dt confirmed=false
-  %dd Set the user as confirmed without any further action. (<i>Default:</i> true)
+  %dd Require verification by the user. This can be performed using Vellup email confirmation (see <strong>send_confirmation_email</strong>) or your own custom method. The response will include a <strong>confirm_token</strong> value for completing confirmation. See the <strong>Confirm a new user</strong> section for steps to complete confirmation. (<i>Default:</i> true)
   %dt send_confirmation_email=true
   %dd Send the user a standard Vellup confirmation email. Ignored where <b>confirmed=true</b>. (<i>Default:</i> false)
 
-%h3 Request
+%h3 Request (default)
 
 %blockquote
   %pre.code
@@ -141,7 +141,7 @@
         -d 'username=testy8@domain.com' -d 'password=changeme' -d 'firstname=Testy8' -d 'lastname=Tester' -X POST \
         https://vellup-api.herokuapp.com/sites/98790123ab908098abffad4328/users/add 2>/dev/null
 
-%h3 Response
+%h3 Response (default)
 
 %blockquote
   %pre.code
@@ -165,6 +165,82 @@
         "confirmed_at":"2011-12-24 17:42:10 +0000",
         "authenticated_at":null,
         "visited_at":null
+      }
+
+%h3 Request (confirmation disabled)
+
+%blockquote
+  %pre.code
+    :preserve
+      $ curl -i -H 'X_API_VERSION:1' -H 'X_API_TOKEN:4192x459-a0b0-243fdaffb1239' \
+        -d 'username=testy8@domain.com' -d 'password=changeme' -d 'firstname=Testy8' -d 'lastname=Tester' \
+        -d 'confirmed=false' -d 'send_confirmation_email=true' -X POST \
+        https://vellup-api.herokuapp.com/sites/98790123ab908098abffad4328/users/add 2>/dev/null
+
+%h3 Response (confirmation disabled)
+
+%blockquote
+  %pre.code
+    :preserve
+      HTTP/1.1 201 Created
+      Content-Type: application/json;charset=utf-8
+      Server: thin 1.2.10 codename I'm dumb
+      X-Frame-Options: sameorigin
+      X-Xss-Protection: 1; mode=block
+      Content-Length: 269
+      Connection: keep-alive
+      
+      {
+        "id":15,
+        "username":"testy9@domain.com",
+        "firstname":"Testy9",
+        "lastname":"Tester",
+        "confirm_token": "763f64f0-14d6-012f-a668-109addaa2672",
+        "confirmed": false,
+        "created_at": "2011-12-30 00:38:44 -0500",
+        "updated_at": "2011-12-30 00:38:44 -0500",
+        "confirmed_at": null,
+        "authenticated_at":null,
+        "visited_at":null
+      }
+
+%h2 Confirm a new user
+
+%p This step is only required if <strong>confirmed=false</strong> parameter was passed during user creation. 
+
+%h3 Request
+
+%blockquote
+  %pre.code
+    :preserve
+      $ curl -i -H 'X_API_VERSION:1' -H 'X_API_TOKEN:4192x459-a0b0-243fdaffb1239' \
+      -d 'confirm_token=763f64f0-14d6-012f-a668-109addaa2672' -X POST \
+      http://vellup-api.herokuapp.com/sites/98790123ab908098abffad4328/users/confirm
+
+%h3 Response
+
+%blockquote
+  %pre.code
+    :preserve
+      HTTP/1.1 200 OK
+      X-Frame-Options: sameorigin
+      X-XSS-Protection: 1; mode=block
+      Content-Type: application/json;charset=utf-8
+      Content-Length: 269
+      Connection: keep-alive
+      Server: thin 1.2.11 codename Bat-Shit Crazy
+
+      {
+        "id": 57,
+        "username": "testy9@dixongroup.net",
+        "firstname": "Testy9",
+        "lastname": "Tester",
+        "confirmed": true,
+        "created_at": "2011-12-30 00:38:44 -0500",
+        "updated_at": "2011-12-30 00:43:01 -0500",
+        "confirmed_at": "2011-12-30 00:43:01 -0500",
+        "authenticated_at": null,
+        "visited_at": null
       }
 
 %h2 List users for a site
