@@ -6,6 +6,11 @@
     .clearfix
       %label{ :for => "name" } Name
       .input
-        %input{ :id => "name", :name => "name" }
+        %input{ :class => "xlarge", :id => "name", :name => "name" }
+    .clearfix
+      %label{ :for => "schema" } JSON Schema (User attributes):
+      .input
+        %textarea{ :class => "xlarge", :rows => 13, :id => "schema", :name => "schema" }
+
   .well
     %button{ :class => "btn primary", :type => "submit" } Add New Site

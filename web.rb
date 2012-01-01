@@ -3,6 +3,8 @@ require 'sinatra'
 require 'rack-flash'
 require 'sinatra/redirect_with_flash'
 require 'rfc822'
+require 'json'
+require 'json-schema'
 require 'haml'
 require 'newrelic_rpm'
 
@@ -69,6 +71,20 @@ module Vellup
         if @sites.empty?
           flash[:info] = 'Please add your first Site.'
           redirect '/sites/add'
+        end
+      end
+      def valid_json?(string)
+        begin JSON.parse(string)
+          return true
+        rescue Exception => e
+          return false
+        end
+      end
+      def valid_json_schema?(string)
+        begin JSON::Validator.validate(string, nil, :validate_schema => true)
+          return true
+        rescue Exception => e
+          return false
         end
       end
     end
@@ -298,10 +314,21 @@ module Vellup
 
     post '/sites/add' do
       authenticated?
-      # XXX Need to implement model-level prepared statements for escaping user input
-      @site = Site.new(:name => params[:name], :visited_at => Time.now, :owner_id => @user.id).save
-      flash[:success] = 'Site created!'
-      redirect "/sites/#{@site.uuid}"
+      schema = params[:schema].empty? ? nil : params[:schema]
+      if !params[:name].empty?
+        if (schema.nil? || (valid_json?(schema) && valid_json_schema?(schema)))
+          # XXX Need to implement model-level prepared statements for escaping user input
+          @site = Site.new(params.merge({ :schema => schema, :visited_at => Time.now, :owner_id => @user.id })).save
+          flash[:success] = 'Site created!'
+          redirect "/sites/#{@site.uuid}"
+        else
+          flash[:error] = 'Invalid schema definition.'
+          haml :'sites/add'
+        end
+      else
+        flash[:error] = 'Need a valid site name.'
+        haml :'sites/add'
+      end
     end
 
     get '/sites/?' do
@@ -314,7 +341,34 @@ module Vellup
       authenticated?
       @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
       if !@site.nil?
-        haml :'sites/profile', :locals => { :profile => @site.values }
+        haml :'sites/profile', :locals => { :profile => @site.values, :schema => JSON.pretty_generate(JSON.parse(@site.values[:schema])) }
+      else
+        flash[:error] = 'Site not found.'
+        redirect '/sites'
+      end
+    end
+
+    put '/sites/:uuid' do
+      authenticated?
+      schema = params[:schema].empty? ? nil : params[:schema]
+      @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
+      if !@site.nil?
+        if !params[:name].empty?
+          if (schema.nil? || (valid_json?(schema) && valid_json_schema?(schema)))
+            params.delete('_method')
+            # XXX Need to implement model-level prepared statements for escaping user input
+            @site.update(params.merge({ :schema => schema }))
+            @site.save
+            flash[:success] = 'Site updated.'
+            redirect "/sites/#{@site.uuid}"
+          else
+            flash[:error] = 'Invalid schema definition.'
+            redirect "/sites/#{@site.uuid}"
+          end
+        else
+          flash[:error] = 'Need a valid site name.'
+          redirect "/sites/#{@site.uuid}"
+        end
       else
         flash[:error] = 'Site not found.'
         redirect '/sites'
