@@ -73,20 +73,21 @@ module Vellup
           redirect '/sites/add'
         end
       end
-      def valid_json?(string)
+      def is_valid_json?(string)
         begin JSON.parse(string)
           return true
         rescue Exception => e
           return false
         end
       end
-      def valid_json_schema?(string)
+      def is_valid_json_schema?(string)
         begin JSON::Validator.validate(string, nil, :validate_schema => true)
           return true
         rescue Exception => e
           return false
         end
       end
+      def 
     end
 
     get '/api' do
@@ -316,7 +317,7 @@ module Vellup
       authenticated?
       schema = params[:schema].empty? ? nil : params[:schema]
       if !params[:name].empty?
-        if (schema.nil? || (valid_json?(schema) && valid_json_schema?(schema)))
+        if (schema.nil? || (is_valid_json?(schema) && is_valid_json_schema?(schema)))
           # XXX Need to implement model-level prepared statements for escaping user input
           @site = Site.new(params.merge({ :schema => schema, :visited_at => Time.now, :owner_id => @user.id })).save
           flash[:success] = 'Site created!'
@@ -354,7 +355,7 @@ module Vellup
       @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
       if !@site.nil?
         if !params[:name].empty?
-          if (schema.nil? || (valid_json?(schema) && valid_json_schema?(schema)))
+          if (schema.nil? || (is_valid_json?(schema) && is_valid_json_schema?(schema)))
             params.delete('_method')
             # XXX Need to implement model-level prepared statements for escaping user input
             @site.update(params.merge({ :schema => schema }))
