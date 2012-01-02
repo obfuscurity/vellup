@@ -90,7 +90,7 @@ module Vellup
 
     get '/sites/?' do
       @sites = []
-      Site.select(:uuid, :name, :created_at, :updated_at).filter(:owner_id => @user.id, :enabled => true).all.each {|s| @sites << s.values}
+      Site.select(:uuid, :name, :schema, :created_at, :updated_at).filter(:owner_id => @user.id, :enabled => true).all.each {|s| @sites << s.values}
       if !@sites.empty?
         status 200
         @sites.to_json
