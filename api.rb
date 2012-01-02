@@ -133,21 +133,26 @@ module Vellup
       if !@site.nil?
         if !User.username_collision?({ :username => params[:username], :site_id => @site.id })
           if params[:username].is_email?
-            confirmed = params[:confirmed] == 'false' ? false : true
-            send_confirmation_email = params[:send_confirmation_email] == 'true' ? true : false
-            %w( uuid confirmed send_confirmation_email ).each {|p| params.delete(p)}
-            # XXX Need to implement model-level prepared statements for escaping user input
-            p params
-            @site_user = User.new(params.merge({ 'site_id' => @site.id, 'email' => params[:username], 'confirmed' => confirmed })).save || nil
-            p @site_user
-            if !@site_user.nil?
-              @site_user.send_confirmation_email if send_confirmation_email
-              [:password, :email, :api_token, :email_is_username, :enabled, :site_id].each {|v| @site_user.values.delete(v)}
-              @site_user.values.delete(:confirm_token) if confirmed
-              status 201
-              @site_user.values.to_json
+            params[:custom] ||= ""
+            if passes_schema?(JSON.parse(params[:custom]), JSON.parse(@site.values[:schema]))
+              confirmed = params[:confirmed] == 'false' ? false : true
+              send_confirmation_email = params[:send_confirmation_email] == 'true' ? true : false
+              %w( uuid confirmed send_confirmation_email ).each {|p| params.delete(p)}
+              # XXX Need to implement model-level prepared statements for escaping user input
+              p params
+              @site_user = User.new(params.merge({ 'site_id' => @site.id, 'email' => params[:username], 'confirmed' => confirmed })).save || nil
+              p @site_user
+              if !@site_user.nil?
+                @site_user.send_confirmation_email if send_confirmation_email
+                [:password, :email, :api_token, :email_is_username, :enabled, :site_id].each {|v| @site_user.values.delete(v)}
+                @site_user.values.delete(:confirm_token) if confirmed
+                status 201
+                @site_user.values.to_json
+              else
+                halt 400
+              end
             else
-              halt 400
+              halt 400, { :message => 'Does not pass schema specification' }.to_json
             end
           else
             halt 400, { :message => 'Invalid username/email format, see RFC822' }.to_json

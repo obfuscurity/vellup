@@ -149,6 +149,8 @@
   %dd Email address for the user, as defined in <a href="http://www.ietf.org/rfc/rfc2822.txt">RFC2822</a>.
   %dt password
   %dd Password string.
+  %dt custom
+  %dd Custom data specification for users of the site. Common use cases are for first and last names, third-party handles (e.g. Twitter) and internal application metadata. This parameter will be validated against the Site <strong>schema</strong> definition (if any). Follows the specification as defined in <a href="http://tools.ietf.org/html/draft-zyp-json-schema-03">JSON Schema Draft 3</a>.<br /><strong>Note:</strong> this field is only <i>required</i> if the Site has a <b>schema</b> that contains <i>required attributes</i>.
 
 %h3 Optional Parameters
 
