@@ -1,6 +1,7 @@
 
 require 'sinatra'
 require 'json'
+require 'json-schema'
 require 'rfc822'
 require 'newrelic_rpm'
 
@@ -48,12 +49,36 @@ module Vellup
           halt 403 if api_token.nil?
         end
       end
+      def is_valid_json?(input)
+        begin JSON.parse(input)
+          return true
+        rescue Exception => e
+          return false
+        end
+      end
+      def is_valid_json_schema?(input)
+        begin JSON::Validator.validate!(input, nil, :validate_schema => true)
+          return true
+        rescue Exception => e
+          return false
+        end
+      end
+      def passes_schema?(input, schema)
+        begin JSON::Validator.validate!(schema.to_json, input.to_json, :validate_schema => true)
+          return true
+        rescue Exception => e
+          return false
+        end
+      end
     end
 
 
     post '/sites/add' do
+      if params[:schema]
+        halt 400 unless is_valid_json_schema?(params[:schema])
+      end
       # XXX Need to implement model-level prepared statements for escaping user input
-      @site = Site.new(:name => params[:name], :owner_id => @user.id).save || nil
+      @site = Site.new(params.merge({ :owner_id => @user.id })).save || nil
       if !@site.nil?
         status 201
         [:id, :enabled, :visited_at, :owner_id].each {|v| @site.values.delete(v)}
@@ -161,7 +186,7 @@ module Vellup
       @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
       if !@site.nil?
         @site_users = []
-        User.select(:users__id, :users__username, :users__firstname, :users__lastname, :users__confirmed, :users__created_at, :users__updated_at, :users__confirmed_at, :users__authenticated_at, :users__visited_at).from(:users, :sites).where(:users__site_id => :sites__id, :sites__uuid => :$u, :sites__enabled => true, :users__enabled => true).order(:users__id).call(:all, :u => params[:uuid]).each {|u| @site_users << u.values}
+        User.select(:users__id, :users__username, :users__custom, :users__confirmed, :users__created_at, :users__updated_at, :users__confirmed_at, :users__authenticated_at, :users__visited_at).from(:users, :sites).where(:users__site_id => :sites__id, :sites__uuid => :$u, :sites__enabled => true, :users__enabled => true).order(:users__id).call(:all, :u => params[:uuid]).each {|u| @site_users << u.values}
         if !@site_users.empty?
           status 200
           @site_users.to_json
@@ -176,7 +201,7 @@ module Vellup
     get '/sites/:uuid/users/:id/?' do
       @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
       if !@site.nil?
-        @site_user = User.select(:id, :username, :firstname, :lastname, :confirmed, :created_at, :updated_at, :confirmed_at, :authenticated_at, :visited_at).where(:id => :$i, :site_id => @site.id, :enabled => true).call(:first, :i => params[:id]) || nil
+        @site_user = User.select(:id, :username, :custom, :confirmed, :created_at, :updated_at, :confirmed_at, :authenticated_at, :visited_at).where(:id => :$i, :site_id => @site.id, :enabled => true).call(:first, :i => params[:id]) || nil
         if !@site_user.nil?
           @site_user.values.to_json
         else
