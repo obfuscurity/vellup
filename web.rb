@@ -73,21 +73,27 @@ module Vellup
           redirect '/sites/add'
         end
       end
-      def is_valid_json?(string)
-        begin JSON.parse(string)
+      def is_valid_json?(input)
+        begin JSON.parse(input)
           return true
         rescue Exception => e
           return false
         end
       end
-      def is_valid_json_schema?(string)
-        begin JSON::Validator.validate(string, nil, :validate_schema => true)
+      def is_valid_json_schema?(input)
+        begin JSON::Validator.validate!(input, nil, :validate_schema => true)
           return true
         rescue Exception => e
           return false
         end
       end
-      def 
+      def passes_schema?(input, schema)
+        begin JSON::Validator.validate!(schema.to_json, input.to_json, :validate_schema => true)
+          return true
+        rescue Exception => e
+          return false
+        end
+      end
     end
 
     get '/api' do
@@ -285,20 +291,26 @@ module Vellup
 
     put '/profile' do
       authenticated?
-      if ((! params[:password1].empty?) || (! params[:password2].empty?))
-        if ((params[:password1] == params[:password2]) and (! params[:password1].empty?))
-          @user.update_password(params[:password1])
-        else
-          flash[:error] = "Those passwords don't match. Please try again."
-          redirect '/profile'
+      tmp_params = {}; params.each {|k,v| tmp_params[k.to_sym] = v}
+      if passes_schema?(@user.values.merge(tmp_params), JSON.parse(Site[1].values[:schema]))
+        if ((! params[:password1].empty?) || (! params[:password2].empty?))
+          if ((params[:password1] == params[:password2]) and (! params[:password1].empty?))
+            @user.update_password(params[:password1])
+          else
+            flash[:error] = "Those passwords don't match. Please try again."
+            redirect '/profile'
+          end
         end
+        # XXX This will go away once we support custom json schemas
+        %w( _method password1 password2 ).each {|p| params.delete(p)}
+        @user.update(params)
+        @user.save
+        flash[:success] = 'Your profile has been updated.'
+        redirect '/profile'
+      else
+        flash[:error] = 'Invalid settings. Please try again.'
+        redirect '/profile'
       end
-      # XXX This will go away once we support custom json schemas
-      %w( _method password1 password2 ).each {|p| params.delete(p)}
-      @user.update(params)
-      @user.save
-      flash[:success] = 'Your profile has been updated.'
-      redirect '/profile'
     end
 
     post '/reset-token' do
@@ -342,7 +354,11 @@ module Vellup
       authenticated?
       @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
       if !@site.nil?
-        haml :'sites/profile', :locals => { :profile => @site.values, :schema => JSON.pretty_generate(JSON.parse(@site.values[:schema])) }
+        schema = ""
+        if is_valid_json?(@site.values[:schema])
+          schema = JSON.pretty_generate(JSON.parse(@site.values[:schema]))
+        end
+        haml :'sites/profile', :locals => { :profile => @site.values, :schema => schema }
       else
         flash[:error] = 'Site not found.'
         redirect '/sites'

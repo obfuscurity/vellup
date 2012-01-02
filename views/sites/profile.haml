@@ -19,11 +19,12 @@
           .input
             %textarea{ :class => "xlarge", :rows => 13, :id => "schema", :name => "schema" }
               = profile[:schema]
-      .span9
-        %h5.preview Preview:
-        %pre.code
-          :preserve
-            #{schema}
+      - if !schema.empty?
+        .span9
+          %h5.preview Schema Preview:
+          %pre.code
+            :preserve
+              #{schema}
   .well
     %input{ :type => "hidden", :name => "_method", :value => "put" }
     %button{ :class => "btn primary", :type => "submit" } Update Site
