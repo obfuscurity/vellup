@@ -71,6 +71,8 @@ class User < Sequel::Model
       return false
     else
       if BCrypt::Password.new(user[:password]) == challenge
+        user.authenticated_at = Time.now
+        user.save
         return user
       else
         return false
