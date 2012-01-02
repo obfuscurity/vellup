@@ -22,7 +22,7 @@ Sequel.migration do
       :uuid          => "2d9774c00d9a012f82c6482a143ef0a0",
       :owner_id      => 1,
       :name          => "vellup",
-      :schema        => "{\"name\":\"User\",\"properties\":{\"firstname\":{\"description\":\"Name\",\"type\":\"string\",\"required\":false},\"lastname\":{\"description\":\"Surname\",\"type\":\"string\",\"required\":false}}}",
+      :schema        => "{\"name\":\"User\",\"properties\":{\"firstname\":{\"description\":\"Name\",\"type\":\"string\",\"minLength\":1,\"required\":false},\"lastname\":{\"description\":\"Surname\",\"type\":\"string\",\"minLength\":1,\"required\":false}}}",
       :enabled       => true,
       :created_at    => timestamp,
       :updated_at    => timestamp,
