@@ -11,7 +11,7 @@
       $ curl -i -H 'X_API_VERSION:1' -H 'X_API_TOKEN:4192x459-a0b0-243fdaffb1239'
       -d 'name=test2'
       -d 'schema={"name":"User","properties":{"firstname":{"description":"Name","type":"string","minLength":1,"required":false}}}'
-      -X POST https://vellup-api.herokuapp.com/sites/add 2>/dev/null
+      -X POST https://vellup-api.herokuapp.com/sites/add
 
 %h3 Response
 
@@ -42,7 +42,7 @@
   %pre.code
     :preserve
       $ curl -i -H 'X_API_VERSION:1' -H 'X_API_TOKEN:4192x459-a0b0-243fdaffb1239' \
-        https://vellup-api.herokuapp.com/sites 2>/dev/null
+        https://vellup-api.herokuapp.com/sites
 
 %h3 Response
 
@@ -82,7 +82,7 @@
   %pre.code
     :preserve
       $ curl -i -H 'X_API_VERSION:1' -H 'X_API_TOKEN:4192x459-a0b0-243fdaffb1239' \
-        https://vellup-api.herokuapp.com/sites/98790123ab908098abffad4328 2>/dev/null
+        https://vellup-api.herokuapp.com/sites/98790123ab908098abffad4328
 
 %h3 Response
 
@@ -112,7 +112,7 @@
   %pre.code
     :preserve
       $ curl -i -H 'X_API_VERSION:1' -H 'X_API_TOKEN:4192x459-a0b0-243fdaffb1239' -X DELETE \
-        https://vellup-api.herokuapp.com/sites/12650123ab908432abbacc1234 2>/dev/null
+        https://vellup-api.herokuapp.com/sites/12650123ab908432abbacc1234
 
 %h3 Response
 
@@ -144,7 +144,7 @@
     :preserve
       $ curl -i -H 'X_API_VERSION:1' -H 'X_API_TOKEN:4192x459-a0b0-243fdaffb1239' \
         -d 'username=testy8@domain.com' -d 'password=changeme' -d 'firstname=Testy8' -d 'lastname=Tester' -X POST \
-        https://vellup-api.herokuapp.com/sites/98790123ab908098abffad4328/users/add 2>/dev/null
+        https://vellup-api.herokuapp.com/sites/98790123ab908098abffad4328/users/add
 
 %h3 Response (default)
 
@@ -180,7 +180,7 @@
       $ curl -i -H 'X_API_VERSION:1' -H 'X_API_TOKEN:4192x459-a0b0-243fdaffb1239' \
         -d 'username=testy8@domain.com' -d 'password=changeme' -d 'firstname=Testy8' -d 'lastname=Tester' \
         -d 'confirmed=false' -d 'send_confirmation_email=true' -X POST \
-        https://vellup-api.herokuapp.com/sites/98790123ab908098abffad4328/users/add 2>/dev/null
+        https://vellup-api.herokuapp.com/sites/98790123ab908098abffad4328/users/add
 
 %h3 Response (confirmation disabled)
 
@@ -256,7 +256,7 @@
   %pre.code
     :preserve
       $ curl -i -H 'X_API_VERSION:1' -H 'X_API_TOKEN:4192x459-a0b0-243fdaffb1239' \
-        https://vellup-api.herokuapp.com/sites/98790123ab908098abffad4328/users 2>/dev/null
+        https://vellup-api.herokuapp.com/sites/98790123ab908098abffad4328/users
 
 %h3 Response
 
@@ -318,7 +318,7 @@
   %pre.code
     :preserve
       $ curl -i -H 'X_API_VERSION:1' -H 'X_API_TOKEN:4192x459-a0b0-243fdaffb1239' \
-        https://vellup-api.herokuapp.com/sites/98790123ab908098abffad4328/users/13 2>/dev/null 
+        https://vellup-api.herokuapp.com/sites/98790123ab908098abffad4328/users/13
 
 %h3 Response
 
@@ -391,7 +391,7 @@
     :preserve
       $ curl -i -H 'X_API_VERSION:1' -H 'X_API_TOKEN:4192x459-a0b0-243fdaffb1239' \
         -d 'username=testy7@domain.com' -d 'password=changeme' -X POST \
-        https://vellup-api.herokuapp.com/sites/98790123ab908098abffad4328/users/auth 2>/dev/null
+        https://vellup-api.herokuapp.com/sites/98790123ab908098abffad4328/users/auth
 
 %h3 Response
 
@@ -427,7 +427,7 @@
   %pre.code
     :preserve
       $ curl -i -H 'X_API_VERSION:1' -H 'X_API_TOKEN:4192x459-a0b0-243fdaffb1239' -X DELETE \
-        https://vellup-api.herokuapp.com/sites/98790123ab908098abffad4328/users/14 2>/dev/null
+        https://vellup-api.herokuapp.com/sites/98790123ab908098abffad4328/users/14
 
 %h3 Response
 
