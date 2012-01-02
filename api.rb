@@ -100,7 +100,7 @@ module Vellup
     end
 
     get '/sites/:uuid/?' do
-      @site = Site.select(:uuid, :name, :enabled, :created_at, :updated_at).filter(:uuid => :$u, :owner_id => @user.id).call(:first, :u => params[:uuid]) || nil
+      @site = Site.select(:uuid, :name, :schema, :enabled, :created_at, :updated_at).filter(:uuid => :$u, :owner_id => @user.id).call(:first, :u => params[:uuid]) || nil
       if !@site.nil?
         if @site.enabled?
           @site.values.delete(:enabled)
