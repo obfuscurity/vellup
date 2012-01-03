@@ -46,7 +46,7 @@ module Vellup
           @user = User.filter(:api_token => api_token, :enabled => true, :confirmed => true).first || nil
           halt 401 if @user.nil?
         else
-          halt 403 if api_token.nil?
+          halt 401 if api_token.nil?
         end
       end
       def is_valid_json?(input)
