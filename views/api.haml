@@ -1,21 +1,55 @@
 
 %h1 API Documentation
 
-%h2 Add new site
+%p The Vellup API is organized around REST. Our API is designed to have predictable, resource-oriented URLS, to use HTTP response codes to indicate API errors, and to use built-in HTTP features which can be understood by off-the-shelf HTTP clients. JSON will be returned in all responses (except <strong>204 No Content</strong>) from the API, including errors.
 
-%h3 Required Parameters
+%h2 Authentication and Versioning
+
+%p Authentication and versioning are passed as HTTP headers. See the <strong>Endpoints</strong> section below for examples.
+
+%dl
+  %dt X_API_VERSION
+  %dd Version of the API. As of this writing the only supported version is <strong>1</strong>.
+  %dt X_API_TOKEN
+  %dd API token, found in the <strong>Developer Tools</strong> section of your <a href="/profile">account profile</a>.
+
+%h2 HTTP Status Code Summary
+
+%dl
+  %dt 200 - OK
+  %dd Request succeeded.
+  %dt 201 - Created
+  %dd Resource created and returned.
+  %dt 204 - No Content
+  %dd Action successfully completed but no data returned (typically after a <strong>DELETE</strong>).
+  %dt 304 - Not Modified
+  %dd User already confirmed.
+  %dt 400 - Bad Request
+  %dd Missing or incorrect parameters.
+  %dt 401 - Unauthorized
+  %dd Authentication failed (user authentication) or missing (API token).
+  %dt 404 - Resource Not Found
+  %dd The requested Site or User resource was not found.
+  %dt 410 - Gone
+  %dd The requested Site or User resource is no longer available.
+
+%h2 Endpoints
+
+%h3 Add new site
+
+%h4 Required Parameters
 
 %dl
   %dt name
   %dd Human-friendly name used to describe the site.
 
-%h3 Optional Parameters
+%h4 Optional Parameters
 
 %dl
   %dt schema
   %dd Custom data specification for users of the site. Common use cases are for first and last names, third-party handles (e.g. Twitter) and internal application metadata. Users added to the site will be validated against the schema definition. Follows the specification as defined in <a href="http://tools.ietf.org/html/draft-zyp-json-schema-03">JSON Schema Draft 3</a>.
 
-%h3 Request
+%h4 Request
 
 %blockquote
   %pre.code
@@ -25,7 +59,7 @@
         -d 'schema={"name":"User","properties":{"firstname":{"description":"Name","type":"string","minLength":1,"required":false}}}' \
         -X POST https://vellup-api.herokuapp.com/sites/add
 
-%h3 Response
+%h4 Response
 
 %blockquote
   %pre.code
@@ -46,9 +80,9 @@
         "updated_at":"2011-12-24 17:25:59 +0000"
       }
 
-%h2 List sites
+%h3 List sites
 
-%h3 Request
+%h4 Request
 
 %blockquote
   %pre.code
@@ -56,7 +90,7 @@
       $ curl -i -H 'X_API_VERSION:1' -H 'X_API_TOKEN:4192x459-a0b0-243fdaffb1239' \
         https://vellup-api.herokuapp.com/sites
 
-%h3 Response
+%h4 Response
 
 %blockquote
   %pre.code
@@ -86,9 +120,9 @@
         }
       ]
 
-%h2 Get site info
+%h3 Get site info
 
-%h3 Request
+%h4 Request
 
 %blockquote
   %pre.code
@@ -96,7 +130,7 @@
       $ curl -i -H 'X_API_VERSION:1' -H 'X_API_TOKEN:4192x459-a0b0-243fdaffb1239' \
         https://vellup-api.herokuapp.com/sites/98790123ab908098abffad4328
 
-%h3 Response
+%h4 Response
 
 %blockquote
   %pre.code
@@ -117,9 +151,9 @@
         "updated_at": "2011-12-22 23:09:13 +0000"
       }
 
-%h2 Delete a site
+%h3 Delete a site
 
-%h3 Request
+%h4 Request
 
 %blockquote
   %pre.code
@@ -127,7 +161,7 @@
       $ curl -i -H 'X_API_VERSION:1' -H 'X_API_TOKEN:4192x459-a0b0-243fdaffb1239' \
         -X DELETE https://vellup-api.herokuapp.com/sites/12650123ab908432abbacc1234
 
-%h3 Response
+%h4 Response
 
 %blockquote
   %pre.code
@@ -138,11 +172,11 @@
       X-Xss-Protection: 1; mode=block
       Connection: keep-alive
 
-%h2 Add new user for a site
+%h3 Add new user for a site
 
 %p By default, adding a user with this endpoint assumes that the user account is confirmed and no further verification is necessary. If you want to force email verification by the user, set the <strong>confirmed</strong> and <strong>send_confirmation_email</strong> parameters accordingly.
 
-%h3 Required Parameters
+%h4 Required Parameters
 
 %dl
   %dt username
@@ -152,7 +186,7 @@
   %dt custom
   %dd Custom data specification for users of the site. Common use cases are for first and last names, third-party handles (e.g. Twitter) and internal application metadata. This parameter will be validated against the Site <strong>schema</strong> definition (if any). Follows the specification as defined in <a href="http://tools.ietf.org/html/draft-zyp-json-schema-03">JSON Schema Draft 3</a>.<br /><strong>Note:</strong> this field is only <i>required</i> if the Site has a <b>schema</b> that contains <i>required attributes</i>.
 
-%h3 Optional Parameters
+%h4 Optional Parameters
 
 %dl
   %dt confirmed
@@ -160,7 +194,7 @@
   %dt send_confirmation_email
   %dd Send the user a standard Vellup confirmation email. Ignored where <b>confirmed=true</b>. (<i>Default:</i> false)
 
-%h3 Request (default)
+%h4 Request (default)
 
 %blockquote
   %pre.code
@@ -170,7 +204,7 @@
         -d 'password=changeme' \
         -X POST https://vellup-api.herokuapp.com/sites/98790123ab908098abffad4328/users/add
 
-%h3 Response (default)
+%h4 Response (default)
 
 %blockquote
   %pre.code
@@ -194,7 +228,7 @@
         "visited_at":null
       }
 
-%h3 Request (confirmation disabled)
+%h4 Request (confirmation disabled)
 
 %blockquote
   %pre.code
@@ -206,7 +240,7 @@
         -d 'send_confirmation_email=true' \
         -X POST https://vellup-api.herokuapp.com/sites/98790123ab908098abffad4328/users/add
 
-%h3 Response (confirmation disabled)
+%h4 Response (confirmation disabled)
 
 %blockquote
   %pre.code
@@ -231,17 +265,17 @@
         "visited_at":null
       }
 
-%h2 Confirm a new user
+%h3 Confirm a new user
 
 %p This step is only required if <strong>confirmed=false</strong> parameter was passed during user creation. 
 
-%h3 Required Parameters
+%h4 Required Parameters
 
 %dl
   %dt confirm_token
   %dd Confirmation token provided during user creation.
 
-%h3 Request
+%h4 Request
 
 %blockquote
   %pre.code
@@ -250,7 +284,7 @@
         -d 'confirm_token=763f64f0-14d6-012f-a668-109addaa2672' \
         -X POST http://vellup-api.herokuapp.com/sites/98790123ab908098abffad4328/users/confirm
 
-%h3 Response
+%h4 Response
 
 %blockquote
   %pre.code
@@ -274,9 +308,9 @@
         "visited_at": null
       }
 
-%h2 List users for a site
+%h3 List users for a site
 
-%h3 Request
+%h4 Request
 
 %blockquote
   %pre.code
@@ -284,7 +318,7 @@
       $ curl -i -H 'X_API_VERSION:1' -H 'X_API_TOKEN:4192x459-a0b0-243fdaffb1239' \
         https://vellup-api.herokuapp.com/sites/98790123ab908098abffad4328/users
 
-%h3 Response
+%h4 Response
 
 %blockquote
   %pre.code
@@ -330,9 +364,9 @@
         }
       ]
 
-%h2 Get user info
+%h3 Get user info
 
-%h3 Request
+%h4 Request
 
 %blockquote
   %pre.code
@@ -340,7 +374,7 @@
       $ curl -i -H 'X_API_VERSION:1' -H 'X_API_TOKEN:4192x459-a0b0-243fdaffb1239' \
         https://vellup-api.herokuapp.com/sites/98790123ab908098abffad4328/users/13
 
-%h3 Response
+%h4 Response
 
 %blockquote
   %pre.code
@@ -364,9 +398,9 @@
         "visited_at": null
       }
 
-%h2 Modifying a user
+%h3 Modifying a user
 
-%h3 Request
+%h4 Request
 
 %blockquote
   %pre.code
@@ -375,7 +409,7 @@
         -d 'password=changeme' \
         -X PUT https://vellup-api.herokuapp.com/sites/98790123ab908098abffad4328/users/13
 
-%h3 Response
+%h4 Response
 
 %blockquote
   %pre.code
@@ -399,9 +433,9 @@
         "visited_at": null
       }
 
-%h2 Authenticating a user
+%h3 Authenticating a user
 
-%h3 Required Parameters
+%h4 Required Parameters
 
 %dl
   %dt username
@@ -409,7 +443,7 @@
   %dt password
   %dd Password string.
 
-%h3 Request
+%h4 Request
 
 %blockquote
   %pre.code
@@ -419,7 +453,7 @@
         -d 'password=changeme' \
         -X POST https://vellup-api.herokuapp.com/sites/98790123ab908098abffad4328/users/auth
 
-%h3 Response
+%h4 Response
 
 %blockquote
   %pre.code
@@ -443,9 +477,9 @@
         "visited_at": null
       }
 
-%h2 Deleting a user
+%h3 Deleting a user
 
-%h3 Request
+%h4 Request
 
 %blockquote
   %pre.code
@@ -453,7 +487,7 @@
       $ curl -i -H 'X_API_VERSION:1' -H 'X_API_TOKEN:4192x459-a0b0-243fdaffb1239' \
         -X DELETE https://vellup-api.herokuapp.com/sites/98790123ab908098abffad4328/users/14
 
-%h3 Response
+%h4 Response
 
 %blockquote
   %pre.code
