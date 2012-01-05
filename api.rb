@@ -49,33 +49,12 @@ module Vellup
           halt 401 if api_token.nil?
         end
       end
-      def is_valid_json?(input)
-        begin JSON.parse(input)
-          return true
-        rescue Exception => e
-          return false
-        end
-      end
-      def is_valid_json_schema?(input)
-        begin JSON::Validator.validate!(input, nil, :validate_schema => true)
-          return true
-        rescue Exception => e
-          return false
-        end
-      end
-      def passes_schema?(input, schema)
-        begin JSON::Validator.validate!(schema.to_json, input.to_json, :validate_schema => true)
-          return true
-        rescue Exception => e
-          return false
-        end
-      end
     end
 
 
     post '/sites/add' do
       if params[:schema]
-        halt 400 unless is_valid_json_schema?(params[:schema])
+        halt 400 unless Schema.is_valid?(params[:schema])
       end
       # XXX Need to implement model-level prepared statements for escaping user input
       @site = Site.new(params.merge({ :owner_id => @user.id })).save || nil
@@ -134,7 +113,7 @@ module Vellup
         if !User.username_collision?({ :username => params[:username], :site_id => @site.id })
           if params[:username].is_email?
             params[:custom] ||= ""
-            if passes_schema?(JSON.parse(params[:custom]), JSON.parse(@site.values[:schema]))
+            if Schema.validates?(JSON.parse(params[:custom]), JSON.parse(@site.values[:schema]))
               confirmed = params[:confirmed] == 'false' ? false : true
               send_confirmation_email = params[:send_confirmation_email] == 'true' ? true : false
               %w( uuid confirmed send_confirmation_email ).each {|p| params.delete(p)}

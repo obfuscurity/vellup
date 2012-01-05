@@ -73,27 +73,6 @@ module Vellup
           redirect '/sites/add'
         end
       end
-      def is_valid_json?(input)
-        begin JSON.parse(input)
-          return true
-        rescue Exception => e
-          return false
-        end
-      end
-      def is_valid_json_schema?(input)
-        begin JSON::Validator.validate!(input, nil, :validate_schema => true)
-          return true
-        rescue Exception => e
-          return false
-        end
-      end
-      def passes_schema?(input, schema)
-        begin JSON::Validator.validate!(schema.to_json, input.to_json, :validate_schema => true)
-          return true
-        rescue Exception => e
-          return false
-        end
-      end
     end
 
     get '/api' do
@@ -292,7 +271,7 @@ module Vellup
     put '/profile' do
       authenticated?
       tmp_params = {}; params.each {|k,v| tmp_params[k.to_sym] = v}
-      if passes_schema?(@user.values.merge(tmp_params), JSON.parse(Site[1].values[:schema]))
+      if Schema.validates?(@user.values.merge(tmp_params), JSON.parse(Site[1].values[:schema]))
         if ((! params[:password1].empty?) || (! params[:password2].empty?))
           if ((params[:password1] == params[:password2]) and (! params[:password1].empty?))
             @user.update_password(params[:password1])
@@ -329,7 +308,7 @@ module Vellup
       authenticated?
       schema = params[:schema].empty? ? nil : params[:schema]
       if !params[:name].empty?
-        if (schema.nil? || (is_valid_json?(schema) && is_valid_json_schema?(schema)))
+        if (schema.nil? || (Schema.is_valid_json?(schema) && Schema.is_valid?(schema)))
           # XXX Need to implement model-level prepared statements for escaping user input
           @site = Site.new(params.merge({ :schema => schema, :visited_at => Time.now, :owner_id => @user.id })).save
           flash[:success] = 'Site created!'
@@ -355,7 +334,7 @@ module Vellup
       @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
       if !@site.nil?
         schema = ""
-        if is_valid_json?(@site.values[:schema])
+        if Schema.is_valid_json?(@site.values[:schema])
           schema = JSON.pretty_generate(JSON.parse(@site.values[:schema]))
         end
         haml :'sites/profile', :locals => { :profile => @site.values, :schema => schema }
@@ -371,7 +350,7 @@ module Vellup
       @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
       if !@site.nil?
         if !params[:name].empty?
-          if (schema.nil? || (is_valid_json?(schema) && is_valid_json_schema?(schema)))
+          if (schema.nil? || (Schema.is_valid_json?(schema) && Schema.is_valid?(schema)))
             params.delete('_method')
             # XXX Need to implement model-level prepared statements for escaping user input
             @site.update(params.merge({ :schema => schema }))
