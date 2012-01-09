@@ -14,6 +14,8 @@ $ export DATABASE_URL=...
 $ export REDISTOGO_URL=...
 ```
 
+Optionally, `unset DATABASE_URL` if you want to run against a local PostgreSQL server.
+
 ## Migrations
 
 Supported tasks are <tt>:reset</tt>, <tt>:up</tt>, <tt>:down</tt> and <tt>:to<tt> (used with <tt>VERSION</tt>).
@@ -25,15 +27,22 @@ Running rake db:migrate:reset attached to terminal... up, run.3
 <= sq:migrate:reset executed
 ```
 
-## Starting the web process
+## Starting the web processes
 
 ```bash
-$ ruby bin/vellup
+$ ruby bin/vellup-web
 Cannot find or read /Users/jdixon/Projects/vellup/config/newrelic.yml
 == Sinatra/1.3.1 has taken the stage on 4567 for development with backup from Thin
 >> Thin web server (v1.2.11 codename Bat-Shit Crazy)
 >> Maximum connections set to 1024
 >> Listening on 0.0.0.0:4567, CTRL+C to stop
+```
+```bash
+$ ruby bin/vellup-api 
+== Sinatra/1.3.1 has taken the stage on 4568 for development with backup from Thin
+>> Thin web server (v1.2.11 codename Bat-Shit Crazy)
+>> Maximum connections set to 1024
+>> Listening on 0.0.0.0:4568, CTRL+C to stop
 ```
 
 ## Monitoring the Redis queue
