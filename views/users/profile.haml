@@ -7,14 +7,6 @@
 %form.form-stacked{ :class => "forceleft", :method => "post" }
   %fieldset
     .clearfix
-      %label{ :for => "firstname" } First Name: 
-      .input
-        %input{ :id => "firstname", :name => "firstname", :value => profile[:firstname] }
-    .clearfix
-      %label{ :for => "lastname" } Last Name:
-      .input
-        %input{ :id => "lastname", :name => "lastname", :value => profile[:lastname] }
-    .clearfix
       %label{ :for => "password1" } Password
       .input
         %input{ :id => "password1", :type => "password", :name => "password1" }
@@ -22,6 +14,20 @@
       %label{ :for => "password2" } Password (again)
       .input
         %input{ :id => "password2", :type => "password", :name => "password2" }
+    .row
+      .span7
+        .clearfix
+          %label{ :for => "custom" } User Attributes (JSON Schema):
+          .input
+            %textarea{ :class => "xlarge", :rows => 13, :id => "custom", :name => "custom" }
+              = profile[:custom]
+      - if preview
+        .span9
+          %h5.preview Preview:
+          %pre.code
+            :preserve
+              #{preview}
+        
   .well
     %input{ :type => "hidden", :name => "_method", :value => "put" }
     %button{ :class => "btn primary", :type => "submit" } Update Profile
