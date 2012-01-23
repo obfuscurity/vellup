@@ -265,12 +265,16 @@ module Vellup
 
     get '/profile/?' do
       authenticated?
-      haml :'users/profile', :locals => { :profile => @user, :site => nil }
+      preview = nil
+      if !@user.values[:custom].nil?
+        preview = JSON.pretty_generate(JSON.parse(@user.values[:custom]))
+      end
+      haml :'users/profile', :locals => { :profile => @user, :preview => preview, :site => nil }
     end
 
     put '/profile' do
       authenticated?
-      tmp_params = {}; params.each {|k,v| tmp_params[k.to_sym] = v}
+      tmp_params = {}; JSON.parse(params[:custom]).each {|k,v| tmp_params[k.to_sym] = v}
       if Schema.validates?(@user.values.merge(tmp_params), JSON.parse(Site[1].values[:schema]))
         if ((! params[:password1].empty?) || (! params[:password2].empty?))
           if ((params[:password1] == params[:password2]) and (! params[:password1].empty?))
@@ -280,9 +284,7 @@ module Vellup
             redirect '/profile'
           end
         end
-        # XXX This will go away once we support custom json schemas
-        %w( _method password1 password2 ).each {|p| params.delete(p)}
-        @user.update(params)
+        @user.update(:custom => params[:custom])
         @user.save
         flash[:success] = 'Your profile has been updated.'
         redirect '/profile'
@@ -427,7 +429,11 @@ module Vellup
       site_owner?(params[:uuid])
       @profile = User.filter(:id => :$i, :site_id => @site.id, :enabled => true).call(:first, :i => params[:id]) || nil
       if !@profile.nil?
-        haml :'users/profile', :locals => { :profile => @profile, :site => @site.name, :uuid => @site.uuid }
+        preview = nil
+        if !@profile.values[:custom].nil?
+          preview = JSON.pretty_generate(JSON.parse(@profile.values[:custom]))
+        end
+        haml :'users/profile', :locals => { :profile => @profile, :preview => preview, :site => @site.name, :uuid => @site.uuid }
       else
         flash[:error] = 'User not found.'
         redirect "/sites/#{@site.uuid}/users"
@@ -439,20 +445,24 @@ module Vellup
       site_owner?(params[:uuid])
       @site_user = User.filter(:id => :$i, :site_id => @site.id, :enabled => true).call(:first, :i => params[:id]) || nil
       if !@site_user.nil?
-        if ((! params[:password1].empty?) || (! params[:password2].empty?))
-          if ((params[:password1] == params[:password2]) and (! params[:password1].empty?))
-            @site_user.update_password(params[:password1])
-          else
-            flash[:error] = "Those passwords don't match. Please try again."
-            redirect "/sites/#{@site.uuid}/users/#{@site_user.id}"
+        tmp_params = {}; JSON.parse(params[:custom]).each {|k,v| tmp_params[k.to_sym] = v}
+        if Schema.validates?(@site_user.values.merge(tmp_params), JSON.parse(@site.values[:schema]))
+          if ((! params[:password1].empty?) || (! params[:password2].empty?))
+            if ((params[:password1] == params[:password2]) and (! params[:password1].empty?))
+              @site_user.update_password(params[:password1])
+            else
+              flash[:error] = "Those passwords don't match. Please try again."
+              redirect "/sites/#{@site.uuid}/users/#{@site_user.id}"
+            end
           end
+          @site_user.update(:custom => params[:custom])
+          @site_user.save
+          flash[:success] = "The user's profile has been updated."
+          redirect "/sites/#{@site.uuid}/users/#{@site_user.id}"
+        else
+          flash[:error] = 'Invalid settings. Please try again.'
+          redirect "/sites/#{@site.uuid}/users/#{@site_user.id}"
         end
-        # XXX This will go away once we support custom json schemas
-        %w( _method password1 password2 uuid id ).each {|p| params.delete(p)}
-        @site_user.update(params)
-        @site_user.save
-        flash[:success] = "The user's profile has been updated."
-        redirect "/sites/#{@site.uuid}/users/#{@site_user.id}"
       else
         flash[:error] = 'User not found.'
         redirect "/sites/#{@site.uuid}/users"
