@@ -53,6 +53,7 @@ module Vellup
 
 
     post '/sites/add' do
+      halt 400 unless (params[:name] && !params[:name].empty?)
       if params[:schema]
         halt 400 unless Schema.is_valid?(params[:schema])
       end
@@ -83,6 +84,23 @@ module Vellup
       if !@site.nil?
         if @site.enabled?
           @site.values.delete(:enabled)
+          status 200
+          @site.values.to_json
+        else
+          halt 410, { :message => 'Site has already been destroyed' }.to_json
+        end
+      else
+        halt 404, { :message => 'Site not found' }.to_json
+      end
+    end
+
+    put '/sites/:uuid/?' do
+      @site = Site.select(:uuid, :name, :schema, :enabled, :created_at, :updated_at).filter(:uuid => :$u, :owner_id => @user.id).call(:first, :u => params[:uuid]) || nil
+      # XXX also need to check :name and :schema for validity. ARGH!
+      if !@site.nil?
+        if @site.enabled?
+          @site.update(params)
+          @site.save
           status 200
           @site.values.to_json
         else
