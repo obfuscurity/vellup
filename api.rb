@@ -58,14 +58,10 @@ module Vellup
         halt 400 unless Schema.is_valid?(params[:schema])
       end
       # XXX Need to implement model-level prepared statements for escaping user input
-      @site = Site.new(params.merge({ :owner_id => @user.id })).save || nil
-      if !@site.nil?
-        status 201
-        [:id, :enabled, :visited_at, :owner_id].each {|v| @site.values.delete(v)}
-        @site.values.to_json
-      else
-        halt 400
-      end
+      @site = Site.new(params.merge({ :owner_id => @user.id })).save || halt 400
+      status 201
+      [:id, :enabled, :visited_at, :owner_id].each {|v| @site.values.delete(v)}
+      @site.values.to_json
     end
 
     get '/sites/?' do
