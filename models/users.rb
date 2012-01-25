@@ -51,8 +51,6 @@ class User < Sequel::Model
 
   def minimal_user_data
     data = {}
-    data[:firstname] = self.firstname
-    data[:lastname] = self.lastname
     data[:email] = self.email
     data[:confirm_token] = self.confirm_token
     data
@@ -120,7 +118,7 @@ module Email
   def send_email_to(user, subject, message)
     RestClient.post ENV['MAILGUN_API_URL'] + '/messages',
                     :from    => 'support@vellup.com',
-                    :to      => "#{user['firstname'].capitalize} #{user['lastname'].capitalize} <#{user['email']}>",
+                    :to      => user['email'],
                     :subject => subject,
                     :text    => message
   end
