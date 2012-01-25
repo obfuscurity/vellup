@@ -71,20 +71,13 @@ module Vellup
     end
 
     put '/sites/:uuid/?' do
-      @site = Site.select(:uuid, :name, :schema, :enabled, :created_at, :updated_at).filter(:uuid => :$u, :owner_id => @user.id).call(:first, :u => params[:uuid]) || nil
+      @site = Site.filter(:uuid => :$u, :owner_id => @user.id).call(:first, :u => params[:uuid]) || nil
       # XXX also need to check :name and :schema for validity. ARGH!
-      if !@site.nil?
-        if @site.enabled?
-          @site.update(params)
-          @site.save
-          status 200
-          @site.values.to_json
-        else
-          halt 410, { :message => 'Site has already been destroyed' }.to_json
-        end
-      else
-        halt 404, { :message => 'Site not found' }.to_json
-      end
+      halt 404 if @site.nil?
+      @site.update(params)
+      @site.save
+      status 200
+      [:uuid, :name, :created_at, :updated_at, :schema].inject({}) do |v,k| v[k] = @site.values[k]; v; end.to_json
     end
 
     delete '/sites/:uuid/?' do
