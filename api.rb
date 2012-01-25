@@ -48,16 +48,12 @@ module Vellup
 
 
     post '/sites/add' do
-      halt 400 unless (params[:name] && !params[:name].empty?)
-      if params[:schema]
-        halt 400 unless Schema.is_valid?(params[:schema])
-      end
       # XXX Need to implement model-level prepared statements for escaping user input
       @site = Site.new(params.merge({ :owner_id => @user.id })).save || nil
+      p @site
       if !@site.nil?
         status 201
-        [:id, :enabled, :visited_at, :owner_id].each {|v| @site.values.delete(v)}
-        @site.values.to_json
+        [:uuid, :name, :created_at, :updated_at, :schema].inject({}) do |v,k| v[k] = @site.values[k]; v; end.to_json
       else
         halt 400
       end
