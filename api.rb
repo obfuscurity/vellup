@@ -81,17 +81,10 @@ module Vellup
     end
 
     delete '/sites/:uuid/?' do
-      @site = Site.filter(:uuid => :$u, :owner_id => @user.id).call(:first, :u => params[:uuid]) || nil
-      if !@site.nil?
-        if @site.enabled?
-          @site.destroy
-          status 204
-        else
-          halt 410, { :message => 'Site has already been destroyed' }.to_json
-        end
-      else
-        halt 404, { :message => 'Site not found' }.to_json
-      end
+      @site = Site.filter(:uuid => :$u, :enabled => true, :owner_id => @user.id).call(:first, :u => params[:uuid]) || nil
+      halt 404 if @site.nil?
+      @site.destroy
+      status 204
     end
 
     post '/sites/:uuid/users/add' do
