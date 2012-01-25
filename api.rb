@@ -50,7 +50,7 @@ module Vellup
     post '/sites/add' do
       # XXX Need to implement model-level prepared statements for escaping user input
       @site = Site.new(params.merge({ :owner_id => @user.id })).save || nil
-      halt 400 if !@site.nil?
+      halt 400 if @site.nil?
       status 201
       [:uuid, :name, :created_at, :updated_at, :schema].inject({}) do |v,k| v[k] = @site.values[k]; v; end.to_json
     end
@@ -64,18 +64,10 @@ module Vellup
     end
 
     get '/sites/:uuid/?' do
-      @site = Site.select(:uuid, :name, :schema, :enabled, :created_at, :updated_at).filter(:uuid => :$u, :owner_id => @user.id).call(:first, :u => params[:uuid]) || nil
-      if !@site.nil?
-        if @site.enabled?
-          @site.values.delete(:enabled)
-          status 200
-          @site.values.to_json
-        else
-          halt 410, { :message => 'Site has already been destroyed' }.to_json
-        end
-      else
-        halt 404, { :message => 'Site not found' }.to_json
-      end
+      @site = Site.select(:uuid, :name, :schema, :created_at, :updated_at).filter(:uuid => :$u, :enabled => true, :owner_id => @user.id).call(:first, :u => params[:uuid]) || nil
+      halt 404 if !@site.nil?
+      status 200
+      @site.values.to_json
     end
 
     put '/sites/:uuid/?' do
