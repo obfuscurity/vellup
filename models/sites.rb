@@ -4,6 +4,13 @@ class Site < Sequel::Model
   many_to_one :users
 
   plugin :boolean_readers
+  plugin :validation_helpers
+
+  def validate
+    super
+    validates_presence :name
+    validates_length_range 2..32, :name
+  end
 
   def before_create
     super
