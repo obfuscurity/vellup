@@ -397,13 +397,18 @@ module Vellup
       params.delete('uuid')
       if !User.username_collision?({ :username => params[:username], :site_id => @site.id })
         if params[:username].is_email?
-          # XXX Need to implement model-level prepared statements for escaping user input
-          @site_user = User.new(params.merge({ 'site_id' => @site.id, 'email' => params[:username], 'confirmed' => true })).save || nil
-          if !@site_user.nil?
-            flash[:success] = 'User added.'
-            redirect "/sites/#{@site.uuid}/users"
+          if Schema.validates?(JSON.parse(custom), JSON.parse(@site.values[:schema]))
+            # XXX Need to implement model-level prepared statements for escaping user input
+            @site_user = User.new(params.merge({ 'site_id' => @site.id, 'email' => params[:username], 'confirmed' => true })).save || nil
+            if !@site_user.nil?
+              flash[:success] = 'User added.'
+              redirect "/sites/#{@site.uuid}/users"
+            else
+              flash[:error] = 'Something happened, we should raise an exception here.'
+              redirect "/sites/#{@site.uuid}/users/add"
+            end
           else
-            flash[:error] = 'Something happened, we should raise an exception here.'
+            flash[:error] = 'Does not pass schema specification. Please try again.'
             redirect "/sites/#{@site.uuid}/users/add"
           end
         else
