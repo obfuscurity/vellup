@@ -41,13 +41,8 @@ module Vellup
         halt 400 unless request.env['HTTP_X_API_VERSION'].to_i == 1
       end
       def authenticate!
-        api_token = request.env['HTTP_X_API_TOKEN'] || nil
-        if !api_token.nil?
-          @user = User.filter(:api_token => api_token, :enabled => true, :confirmed => true).first || nil
-          halt 401 if @user.nil?
-        else
-          halt 401 if api_token.nil?
-        end
+        @user = User.filter(:api_token => request.env['HTTP_X_API_TOKEN'], :enabled => true, :confirmed => true).first
+        halt 401 if @user.nil?
       end
     end
 
