@@ -15,14 +15,14 @@
       %label{ :for => "password" } Password
       .input
         %input{ :id => "password", :type => "password", :name => "password" }
-    .clearfix
-      %label{ :for => "firstname" } Firstname
-      .input
-        %input{ :id => "firstname", :name => "firstname" }
-    .clearfix
-      %label{ :for => "lastname" } Lastname
-      .input
-        %input{ :id => "lastname", :name => "lastname" }
+    - if view != "signup"
+      .row
+        .span7
+          .clearfix
+            %label{ :for => "custom" } User Attributes (JSON Schema):
+            .input
+              %textarea{ :class => "xlarge", :rows => 13, :id => "custom", :name => "custom" }
+
   .well
     - if view == "signup"
       %button{ :class => "btn primary", :type => "submit" } Signup for Vellup!
