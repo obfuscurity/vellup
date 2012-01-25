@@ -50,7 +50,6 @@ module Vellup
     post '/sites/add' do
       # XXX Need to implement model-level prepared statements for escaping user input
       @site = Site.new(params.merge({ :owner_id => @user.id })).save || nil
-      p @site
       if !@site.nil?
         status 201
         [:uuid, :name, :created_at, :updated_at, :schema].inject({}) do |v,k| v[k] = @site.values[k]; v; end.to_json
