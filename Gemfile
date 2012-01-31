@@ -1,4 +1,5 @@
 source "http://rubygems.org"
+source 'https://gems.gemfury.com/uDdMuaVsXVTd8HpbGwMc'
 
 gem "rake"
 gem "sinatra", "1.3.1"
@@ -14,3 +15,4 @@ gem "rest-client"
 gem "resque"
 gem "rfc822"
 gem "newrelic_rpm"
+gem "vellup-data", "0.0.1"

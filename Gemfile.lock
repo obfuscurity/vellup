@@ -1,5 +1,6 @@
 GEM
   remote: http://rubygems.org/
+  remote: https://gems.gemfury.com/uDdMuaVsXVTd8HpbGwMc/
   specs:
     bcrypt-ruby (3.0.1)
     daemons (1.1.4)
@@ -46,6 +47,13 @@ GEM
       macaddr (~> 1.0)
     vegas (0.1.8)
       rack (>= 1.0.0)
+    vellup-data (0.0.1)
+      bcrypt-ruby
+      pg
+      resque
+      rest-client
+      sequel
+      uuid
 
 PLATFORMS
   ruby
@@ -65,3 +73,4 @@ DEPENDENCIES
   sinatra-redirect-with-flash
   thin (= 1.2.10)
   uuid
+  vellup-data (= 0.0.1)
