@@ -1,4 +1,3 @@
-
 require 'sinatra'
 require 'rack-flash'
 require 'sinatra/redirect_with_flash'
