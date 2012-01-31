@@ -4,6 +4,7 @@ require 'sinatra/redirect_with_flash'
 require 'rfc822'
 require 'haml'
 require 'newrelic_rpm'
+
 require 'vellup/data'
 
 module Vellup
