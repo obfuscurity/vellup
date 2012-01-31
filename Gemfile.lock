@@ -52,7 +52,7 @@ GEM
       macaddr (~> 1.0)
     vegas (0.1.8)
       rack (>= 1.0.0)
-    vellup-data (0.0.1)
+    vellup-data (0.0.2)
       bcrypt-ruby
       pg
       resque
@@ -79,4 +79,4 @@ DEPENDENCIES
   sinatra-redirect-with-flash
   thin (= 1.2.10)
   uuid
-  vellup-data (= 0.0.1)
+  vellup-data (= 0.0.2)
