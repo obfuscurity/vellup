@@ -16,3 +16,7 @@ gem "resque"
 gem "rfc822"
 gem "newrelic_rpm"
 gem "vellup-data", "0.0.1"
+
+group :development do
+  gem "foreman"
+end
