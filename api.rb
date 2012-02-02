@@ -1,6 +1,5 @@
 require 'sinatra'
 require 'json'
-require 'json-schema'
 require 'newrelic_rpm'
 
 require 'vellup/data'

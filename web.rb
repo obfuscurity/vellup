@@ -3,7 +3,6 @@ require 'rack-flash'
 require 'sinatra/redirect_with_flash'
 require 'rfc822'
 require 'json'
-require 'json-schema'
 require 'haml'
 require 'newrelic_rpm'
 
