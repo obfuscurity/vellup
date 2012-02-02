@@ -9,9 +9,8 @@ gem "rack-flash"
 gem "sinatra-redirect-with-flash"
 gem "rfc822"
 gem "json"
-gem "json-schema", "1.0.0"
 gem "newrelic_rpm"
-gem "vellup-data", "0.0.2"
+gem "vellup-data", "0.0.3"
 
 group :development do
   gem "foreman"
