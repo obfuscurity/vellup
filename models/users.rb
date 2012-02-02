@@ -2,14 +2,26 @@
 require 'bcrypt'
 require 'resque'
 require 'rest_client'
+require 'rfc822'
+
+class Sequel::Model
+  def validates_email(input)
+    errors.add(input, "Invalid username/email format, see RFC822") unless input.is_email?
+  end
 
 class User < Sequel::Model
 
   one_to_many :sites
 
   plugin :boolean_readers
+  plugin :validation_helpers
 
   Resque.redis = ENV['REDISTOGO_URL']
+
+  def validate
+    super
+    validates_email [:username, :email]
+  end
 
   def before_create
     super
