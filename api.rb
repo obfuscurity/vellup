@@ -1,14 +1,14 @@
-
 require 'sinatra'
 require 'json'
 require 'json-schema'
 require 'newrelic_rpm'
 
-require './models/all'
+require 'vellup/data'
 
 module Vellup
   class API < Sinatra::Base
-
+   include Vellup::Data
+   
     configure do
       enable :logging
       disable :raise_errors

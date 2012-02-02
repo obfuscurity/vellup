@@ -1,4 +1,3 @@
-
 require 'sinatra'
 require 'rack-flash'
 require 'sinatra/redirect_with_flash'
@@ -8,10 +7,11 @@ require 'json-schema'
 require 'haml'
 require 'newrelic_rpm'
 
-require './models/all'
+require 'vellup/data'
 
 module Vellup
   class Web < Sinatra::Base
+    include Vellup::Data
 
     use Rack::Flash, :sweep => true
 
