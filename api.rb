@@ -167,19 +167,12 @@ module Vellup
 
     post '/sites/:uuid/users/auth' do
       @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
-      if !@site.nil?
-        @site_user = User.authenticate(params.merge({ :site => @site.id  })) || nil
-        if !@site_user.nil?
-          status 200
-          [ :password, :email, :api_token, :confirm_token, :email_is_username, :enabled, :site_id ].each {|k| @site_user.values.delete(k)}
-          @site_user.values.to_json
-        else
-          halt 401, { :message => 'Authentication failed' }.to_json
-        end
-      else
-        halt 404, { :message => 'Site not found' }.to_json
-      end
+      halt 404 if @site.nil?
+      @site_user = User.authenticate(params.merge({ :site => @site.id  })) || nil
+      halt 401 if @site_user.nil?
+      status 200
+      [ :password, :email, :api_token, :confirm_token, :email_is_username, :enabled, :site_id ].each {|k| @site_user.values.delete(k)}
+      @site_user.values.to_json
     end
-
   end
 end
