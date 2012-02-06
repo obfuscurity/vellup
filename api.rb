@@ -6,7 +6,7 @@ require 'vellup/data'
 
 module Vellup
   class API < Sinatra::Base
-   include Vellup::Data
+    include Vellup::Data
    
     configure do
       enable :logging
