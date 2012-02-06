@@ -138,34 +138,22 @@ module Vellup
 
     put '/sites/:uuid/users/:id' do
       @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
-      if !@site.nil?
-        @site_user = User.filter(:id => :$i, :site_id => @site.id, :enabled => true).call(:first, :i => params[:id]) || nil
-        if !@site_user.nil?
-          params[:custom] ||= ""
-          if Schema.validates?(JSON.parse(params[:custom]), JSON.parse(@site.values[:schema]))
-            if !params[:password].nil?
-              if !params[:password].empty?
-                @site_user.update_password(params[:password])
-              else
-                halt 400, { :message => 'Password cannot be an empty string' }.to_json
-              end
-            end
-            # XXX This will go away once we support custom json schemas
-            %w( uuid id username password confirmed enabled created_at updated_at confirmed_at authenticated_at visited_at ).each {|p| params.delete(p)}
-            @site_user.update(params)
-            @site_user.save
-            status 200
-            [ :password, :email, :api_token, :confirm_token, :email_is_username, :enabled, :site_id ].each {|k| @site_user.values.delete(k)}
-            @site_user.values.to_json
-          else
-            halt 400, { :message => 'Does not pass schema specification' }.to_json
-          end
-        else
-          halt 404, { :message => 'User not found' }.to_json
-        end
-      else
-        halt 404, { :message => 'Site not found' }.to_json
+      halt 404 if @site.nil?
+      @site_user = User.filter(:id => :$i, :site_id => @site.id, :enabled => true).call(:first, :i => params[:id]) || nil
+      halt 404 if @site_user.nil?
+      params[:custom] ||= ""
+      halt 400 if !Schema.validates?(JSON.parse(params[:custom]), JSON.parse(@site.values[:schema]))
+      if !params[:password].nil?
+        halt 400 if params[:password].empty?
+        @site_user.update_password(params[:password])
       end
+      # XXX This will go away once we support custom json schemas
+      %w( uuid id username password confirmed enabled created_at updated_at confirmed_at authenticated_at visited_at ).each {|p| params.delete(p)}
+      @site_user.update(params)
+      @site_user.save
+      status 200
+      [ :password, :email, :api_token, :confirm_token, :email_is_username, :enabled, :site_id ].each {|k| @site_user.values.delete(k)}
+      @site_user.values.to_json
     end
 
     delete '/sites/:uuid/users/:id' do
