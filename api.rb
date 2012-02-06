@@ -129,16 +129,11 @@ module Vellup
 
     get '/sites/:uuid/users/:id/?' do
       @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
-      if !@site.nil?
-        @site_user = User.select(:id, :username, :custom, :confirmed, :created_at, :updated_at, :confirmed_at, :authenticated_at, :visited_at).where(:id => :$i, :site_id => @site.id, :enabled => true).call(:first, :i => params[:id]) || nil
-        if !@site_user.nil?
-          @site_user.values.to_json
-        else
-          halt 404, { :message => 'User not found' }.to_json
-        end
-      else
-        halt 404, { :message => 'Site not found' }.to_json
-      end
+      halt 404 if @site.nil?
+      @site_user = User.select(:id, :username, :custom, :confirmed, :created_at, :updated_at, :confirmed_at, :authenticated_at, :visited_at).where(:id => :$i, :site_id => @site.id, :enabled => true).call(:first, :i => params[:id]) || nil
+      halt 404 if @site_user.nil?
+      status 200
+      @site_user.values.to_json
     end
 
     put '/sites/:uuid/users/:id' do
