@@ -106,24 +106,15 @@ module Vellup
 
     post '/sites/:uuid/users/confirm' do
       @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
-      if !@site.nil?
-        @site_user = User.filter(:confirm_token => :$t, :site_id => @site.id, :enabled => true).call(:first, :t => params[:confirm_token])
-        if !@site_user.nil?
-          if !@site_user.confirmed?
-            @site_user.confirm
-            @site_user.save
-            [:password, :email, :api_token, :confirm_token, :email_is_username, :enabled, :site_id].each {|v| @site_user.values.delete(v)}
-            status 200
-            @site_user.values.to_json
-          else
-            halt 304
-          end
-        else
-          halt 404, { :message => 'User not found' }.to_json
-        end
-      else
-        halt 404, { :message => 'Site not found' }.to_json
-      end
+      halt 404 if @site.nil?
+      @site_user = User.filter(:confirm_token => :$t, :site_id => @site.id, :enabled => true).call(:first, :t => params[:confirm_token])
+      halt 404 if @site_user.nil?
+      halt 304 if @site_user.confirmed?
+      @site_user.confirm
+      @site_user.save
+      [:password, :email, :api_token, :confirm_token, :email_is_username, :enabled, :site_id].each {|v| @site_user.values.delete(v)}
+      status 200
+      @site_user.values.to_json
     end
 
     get '/sites/:uuid/users/?' do
