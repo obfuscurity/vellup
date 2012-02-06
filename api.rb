@@ -119,18 +119,12 @@ module Vellup
 
     get '/sites/:uuid/users/?' do
       @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
-      if !@site.nil?
-        @site_users = []
-        User.select(:users__id, :users__username, :users__custom, :users__confirmed, :users__created_at, :users__updated_at, :users__confirmed_at, :users__authenticated_at, :users__visited_at).from(:users, :sites).where(:users__site_id => :sites__id, :sites__uuid => :$u, :sites__enabled => true, :users__enabled => true).order(:users__id).call(:all, :u => params[:uuid]).each {|u| @site_users << u.values}
-        if !@site_users.empty?
-          status 200
-          @site_users.to_json
-        else
-          status 204
-        end
-      else
-        halt 404, { :message => 'Site not found' }.to_json
-      end
+      halt 404 if @site.nil?
+      @site_users = []
+      User.select(:users__id, :users__username, :users__custom, :users__confirmed, :users__created_at, :users__updated_at, :users__confirmed_at, :users__authenticated_at, :users__visited_at).from(:users, :sites).where(:users__site_id => :sites__id, :sites__uuid => :$u, :sites__enabled => true, :users__enabled => true).order(:users__id).call(:all, :u => params[:uuid]).each {|u| @site_users << u.values}
+      halt 204 if @site_users.empty?
+      status 200
+      @site_users.to_json
     end
 
     get '/sites/:uuid/users/:id/?' do
