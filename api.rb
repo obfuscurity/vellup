@@ -90,24 +90,18 @@ module Vellup
       halt 404 if @site.nil?
       halt 410 if User.username_collision?({ :username => params[:username], :site_id => @site.id })
       params[:custom] ||= ""
-      if Schema.validates?(JSON.parse(params[:custom]), JSON.parse(@site.values[:schema]))
-        confirmed = params[:confirmed] == 'false' ? false : true
-        send_confirmation_email = params[:send_confirmation_email] == 'true' ? true : false
-        %w( uuid confirmed send_confirmation_email ).each {|p| params.delete(p)}
-        # XXX Need to implement model-level prepared statements for escaping user input
-        @site_user = User.new(params.merge({ 'site_id' => @site.id, 'email' => params[:username], 'confirmed' => confirmed })).save || nil
-        if !@site_user.nil?
-          @site_user.send_confirmation_email if send_confirmation_email
-          [:password, :email, :api_token, :email_is_username, :enabled, :site_id].each {|v| @site_user.values.delete(v)}
-          @site_user.values.delete(:confirm_token) if confirmed
-          status 201
-          @site_user.values.to_json
-        else
-          halt 400
-        end
-      else
-        halt 400, { :message => 'Does not pass schema specification' }.to_json
-      end
+      halt 400 if !Schema.validates?(JSON.parse(params[:custom]), JSON.parse(@site.values[:schema]))
+      confirmed = params[:confirmed] == 'false' ? false : true
+      send_confirmation_email = params[:send_confirmation_email] == 'true' ? true : false
+      %w( uuid confirmed send_confirmation_email ).each {|p| params.delete(p)}
+      # XXX Need to implement model-level prepared statements for escaping user input
+      @site_user = User.new(params.merge({ 'site_id' => @site.id, 'email' => params[:username], 'confirmed' => confirmed })).save || nil
+      halt 400 if @site_user.nil?
+      @site_user.send_confirmation_email if send_confirmation_email
+      [:password, :email, :api_token, :email_is_username, :enabled, :site_id].each {|v| @site_user.values.delete(v)}
+      @site_user.values.delete(:confirm_token) if confirmed
+      status 201
+      @site_user.values.to_json
     end
 
     post '/sites/:uuid/users/confirm' do
