@@ -5,9 +5,10 @@ require 'rest_client'
 require 'rfc822'
 
 class Sequel::Model
-  def validates_email(input)
-    errors.add(input, "Invalid username/email format, see RFC822") unless input.is_email?
-  end
+  #def validates_email(input)
+  #  errors.add(input, "Invalid username/email format, see RFC822") unless input.is_email?
+  #end
+end
 
 class User < Sequel::Model
 
@@ -20,7 +21,7 @@ class User < Sequel::Model
 
   def validate
     super
-    validates_email [:username, :email]
+    #validates_email [:username, :email]
   end
 
   def before_create
