@@ -2,10 +2,11 @@ require 'sinatra'
 require 'rack-flash'
 require 'sinatra/redirect_with_flash'
 require 'rfc822'
+require 'json'
 require 'haml'
 require 'newrelic_rpm'
 
-require 'vellup/data'
+require './models/all'
 
 module Vellup
   class Web < Sinatra::Base
@@ -263,25 +264,33 @@ module Vellup
 
     get '/profile/?' do
       authenticated?
-      haml :'users/profile', :locals => { :profile => @user, :site => nil }
+      preview = nil
+      if !@user.values[:custom].nil?
+        preview = JSON.pretty_generate(JSON.parse(@user.values[:custom]))
+      end
+      haml :'users/profile', :locals => { :profile => @user, :preview => preview, :site => nil }
     end
 
     put '/profile' do
       authenticated?
-      if ((! params[:password1].empty?) || (! params[:password2].empty?))
-        if ((params[:password1] == params[:password2]) and (! params[:password1].empty?))
-          @user.update_password(params[:password1])
-        else
-          flash[:error] = "Those passwords don't match. Please try again."
-          redirect '/profile'
+      tmp_params = {}; JSON.parse(params[:custom]).each {|k,v| tmp_params[k.to_sym] = v}
+      if Schema.validates?(@user.values.merge(tmp_params), JSON.parse(Site[1].values[:schema]))
+        if ((! params[:password1].empty?) || (! params[:password2].empty?))
+          if ((params[:password1] == params[:password2]) and (! params[:password1].empty?))
+            @user.update_password(params[:password1])
+          else
+            flash[:error] = "Those passwords don't match. Please try again."
+            redirect '/profile'
+          end
         end
+        @user.update(:custom => params[:custom])
+        @user.save
+        flash[:success] = 'Your profile has been updated.'
+        redirect '/profile'
+      else
+        flash[:error] = 'Invalid settings. Please try again.'
+        redirect '/profile'
       end
-      # XXX This will go away once we support custom json schemas
-      %w( _method password1 password2 ).each {|p| params.delete(p)}
-      @user.update(params)
-      @user.save
-      flash[:success] = 'Your profile has been updated.'
-      redirect '/profile'
     end
 
     post '/reset-token' do
@@ -298,10 +307,21 @@ module Vellup
 
     post '/sites/add' do
       authenticated?
-      # XXX Need to implement model-level prepared statements for escaping user input
-      @site = Site.new(:name => params[:name], :visited_at => Time.now, :owner_id => @user.id).save
-      flash[:success] = 'Site created!'
-      redirect "/sites/#{@site.uuid}"
+      schema = params[:schema].empty? ? nil : params[:schema]
+      if !params[:name].empty?
+        if (schema.nil? || (Schema.is_valid_json?(schema) && Schema.is_valid?(schema)))
+          # XXX Need to implement model-level prepared statements for escaping user input
+          @site = Site.new(params.merge({ :schema => schema, :visited_at => Time.now, :owner_id => @user.id })).save
+          flash[:success] = 'Site created!'
+          redirect "/sites/#{@site.uuid}"
+        else
+          flash[:error] = 'Invalid schema definition.'
+          haml :'sites/add'
+        end
+      else
+        flash[:error] = 'Need a valid site name.'
+        haml :'sites/add'
+      end
     end
 
     get '/sites/?' do
@@ -314,7 +334,38 @@ module Vellup
       authenticated?
       @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
       if !@site.nil?
-        haml :'sites/profile', :locals => { :profile => @site.values }
+        schema = ""
+        if Schema.is_valid_json?(@site.values[:schema])
+          schema = JSON.pretty_generate(JSON.parse(@site.values[:schema]))
+        end
+        haml :'sites/profile', :locals => { :profile => @site.values, :schema => schema }
+      else
+        flash[:error] = 'Site not found.'
+        redirect '/sites'
+      end
+    end
+
+    put '/sites/:uuid' do
+      authenticated?
+      schema = params[:schema].empty? ? nil : params[:schema]
+      @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
+      if !@site.nil?
+        if !params[:name].empty?
+          if (schema.nil? || (Schema.is_valid_json?(schema) && Schema.is_valid?(schema)))
+            params.delete('_method')
+            # XXX Need to implement model-level prepared statements for escaping user input
+            @site.update(params.merge({ :schema => schema }))
+            @site.save
+            flash[:success] = 'Site updated.'
+            redirect "/sites/#{@site.uuid}"
+          else
+            flash[:error] = 'Invalid schema definition.'
+            redirect "/sites/#{@site.uuid}"
+          end
+        else
+          flash[:error] = 'Need a valid site name.'
+          redirect "/sites/#{@site.uuid}"
+        end
       else
         flash[:error] = 'Site not found.'
         redirect '/sites'
@@ -345,13 +396,18 @@ module Vellup
       params.delete('uuid')
       if !User.username_collision?({ :username => params[:username], :site_id => @site.id })
         if params[:username].is_email?
-          # XXX Need to implement model-level prepared statements for escaping user input
-          @site_user = User.new(params.merge({ 'site_id' => @site.id, 'email' => params[:username], 'confirmed' => true })).save || nil
-          if !@site_user.nil?
-            flash[:success] = 'User added.'
-            redirect "/sites/#{@site.uuid}/users"
+          if Schema.validates?(JSON.parse(custom), JSON.parse(@site.values[:schema]))
+            # XXX Need to implement model-level prepared statements for escaping user input
+            @site_user = User.new(params.merge({ 'site_id' => @site.id, 'email' => params[:username], 'confirmed' => true })).save || nil
+            if !@site_user.nil?
+              flash[:success] = 'User added.'
+              redirect "/sites/#{@site.uuid}/users"
+            else
+              flash[:error] = 'Something happened, we should raise an exception here.'
+              redirect "/sites/#{@site.uuid}/users/add"
+            end
           else
-            flash[:error] = 'Something happened, we should raise an exception here.'
+            flash[:error] = 'Does not pass schema specification. Please try again.'
             redirect "/sites/#{@site.uuid}/users/add"
           end
         else
@@ -377,7 +433,11 @@ module Vellup
       site_owner?(params[:uuid])
       @profile = User.filter(:id => :$i, :site_id => @site.id, :enabled => true).call(:first, :i => params[:id]) || nil
       if !@profile.nil?
-        haml :'users/profile', :locals => { :profile => @profile, :site => @site.name, :uuid => @site.uuid }
+        preview = nil
+        if !@profile.values[:custom].nil?
+          preview = JSON.pretty_generate(JSON.parse(@profile.values[:custom]))
+        end
+        haml :'users/profile', :locals => { :profile => @profile, :preview => preview, :site => @site.name, :uuid => @site.uuid }
       else
         flash[:error] = 'User not found.'
         redirect "/sites/#{@site.uuid}/users"
@@ -389,20 +449,24 @@ module Vellup
       site_owner?(params[:uuid])
       @site_user = User.filter(:id => :$i, :site_id => @site.id, :enabled => true).call(:first, :i => params[:id]) || nil
       if !@site_user.nil?
-        if ((! params[:password1].empty?) || (! params[:password2].empty?))
-          if ((params[:password1] == params[:password2]) and (! params[:password1].empty?))
-            @site_user.update_password(params[:password1])
-          else
-            flash[:error] = "Those passwords don't match. Please try again."
-            redirect "/sites/#{@site.uuid}/users/#{@site_user.id}"
+        tmp_params = {}; JSON.parse(params[:custom]).each {|k,v| tmp_params[k.to_sym] = v}
+        if Schema.validates?(@site_user.values.merge(tmp_params), JSON.parse(@site.values[:schema]))
+          if ((! params[:password1].empty?) || (! params[:password2].empty?))
+            if ((params[:password1] == params[:password2]) and (! params[:password1].empty?))
+              @site_user.update_password(params[:password1])
+            else
+              flash[:error] = "Those passwords don't match. Please try again."
+              redirect "/sites/#{@site.uuid}/users/#{@site_user.id}"
+            end
           end
+          @site_user.update(:custom => params[:custom])
+          @site_user.save
+          flash[:success] = "The user's profile has been updated."
+          redirect "/sites/#{@site.uuid}/users/#{@site_user.id}"
+        else
+          flash[:error] = 'Invalid settings. Please try again.'
+          redirect "/sites/#{@site.uuid}/users/#{@site_user.id}"
         end
-        # XXX This will go away once we support custom json schemas
-        %w( _method password1 password2 uuid id ).each {|p| params.delete(p)}
-        @site_user.update(params)
-        @site_user.save
-        flash[:success] = "The user's profile has been updated."
-        redirect "/sites/#{@site.uuid}/users/#{@site_user.id}"
       else
         flash[:error] = 'User not found.'
         redirect "/sites/#{@site.uuid}/users"

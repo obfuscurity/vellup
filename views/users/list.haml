@@ -1,13 +1,12 @@
 
 %h1 Users for #{site}
 
-%ul.unstyled
-  - @users.each do |user|
-    %li
-      %a{ :href => "/sites/#{user[:site_uuid]}/users/#{user[:id]}" }
-        #{user[:username]}
-      - if !(user[:firstname] + user[:lastname]).empty?
-        ( #{user[:firstname].capitalize} #{user[:lastname].capitalize} )
+%p
+  %ul.unstyled
+    - @users.each do |user|
+      %li
+        %a{ :href => "/sites/#{user[:site_uuid]}/users/#{user[:id]}" }
+          #{user[:username]}
 
 .well
   %a{ :class => "btn primary", :href => "/sites/#{uuid}/users/add" } Add User

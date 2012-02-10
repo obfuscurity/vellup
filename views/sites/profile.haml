@@ -1,11 +1,33 @@
 
 %h1 Dashboard for #{profile[:name]}
 
-%p Eventually we'll have usage data here.
+%p
+  %a{ :class => "btn default", :href => "/sites/#{profile[:uuid]}/users" } View Users
 
-.well
-  %a{ :class => "btn default", :href => "/sites/#{profile[:uuid]}/users" } Users
-  %a{ :class => "btn primary", :href => "/sites/#{profile[:uuid]}/users/add" } Add User
+%h2 Settings
+
+%form.form-stacked{ :class => "forceleft", :method => "post" }
+  %fieldset
+    .clearfix
+      %label{ :for => "name" } Site Name:
+      .input
+        %input{ :class => "xlarge", :id => "name", :name => "name", :value => profile[:name] }
+    .row
+      .span7
+        .clearfix
+          %label{ :for => "schema" } JSON Schema (user attributes):
+          .input
+            %textarea{ :class => "xlarge", :rows => 13, :id => "schema", :name => "schema" }
+              = profile[:schema]
+      - if !schema.empty?
+        .span9
+          %h5.preview Schema Preview:
+          %pre.code
+            :preserve
+              #{schema}
+  .well
+    %input{ :type => "hidden", :name => "_method", :value => "put" }
+    %button{ :class => "btn primary", :type => "submit" } Update Site
 
 .well
   %form{ :class => "forceleft", :method => "post" }

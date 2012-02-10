@@ -1,11 +1,12 @@
 
 %h1 Sites
 
-%ul.unstyled
-  - @sites.each do |site|
-    %li
-      %a{ :href => "/sites/#{site[:uuid]}" }
-        = site[:name]
+%p
+  %ul.unstyled
+    - @sites.each do |site|
+      %li
+        %a{ :href => "/sites/#{site[:uuid]}" }
+          = site[:name]
 
 .well
   %a{ :class => "btn primary", :href => "/sites/add" } Add Site
