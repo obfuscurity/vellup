@@ -140,8 +140,8 @@ module Vellup
       halt 404 if @site.nil?
       @site_user = User.filter(:id => :$i, :site_id => @site.id, :enabled => true).call(:first, :i => params[:id]) || nil
       halt 404 if @site_user.nil?
-      params[:custom] ||= ""
-      halt 400 if !Schema.validates?(JSON.parse(params[:custom]), JSON.parse(@site.values[:schema]))
+      #params[:custom] ||= ""
+      halt 400 if !Schema.validates?(JSON.parse(params[:custom] || '{}'), JSON.parse(@site.values[:schema] || '{}'))
       if !params[:password].nil?
         halt 400 if params[:password].empty?
         @site_user.update_password(params[:password])
