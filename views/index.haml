@@ -25,5 +25,8 @@
   %li.a Certainly not! We use the awesome <a href='https://github.com/codahale/bcrypt-ruby'>bcrypt-ruby</a> library from Coda Hale.
 
   %li.q Will you let me store custom user data?
-  %li.a Very soon, mon frère. You'll be able to define your own custom schema for user objects<br />and we'll perform server-side validation according to your specification.
+  %li.a Absolutely! Each user object can store its own custom JSON object. Sites can define their own JSON Schema (draft 03). If the schema contains any <i>required</i> attributes, we'll validate the user data against your specification.
+
+  %li.q That's cool and all, but can I pass validation errors back to my end user?
+  %li.a Not quite yet, but that's our plan. Right now we just pass back a 400 status with the JSON message <i>&quot;Does not pass schema specification&quot;</i> that you'll need to intercept.
 

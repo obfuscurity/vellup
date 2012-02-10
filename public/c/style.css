@@ -33,3 +33,7 @@ ul {
   color: #666;
   padding: 0 0 15px 15px;
 }
+h5.preview {
+  height: 18px;
+  line-height: 18px;
+}
