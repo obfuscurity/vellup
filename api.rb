@@ -2,11 +2,10 @@ require 'sinatra'
 require 'json'
 require 'newrelic_rpm'
 
-require 'vellup/data'
+require './models/all'
 
 module Vellup
   class API < Sinatra::Base
-    include Vellup::Data
    
     configure do
       enable :logging
@@ -89,8 +88,8 @@ module Vellup
       @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
       halt 404 if @site.nil?
       halt 410 if User.username_collision?({ :username => params[:username], :site_id => @site.id })
-      params[:custom] ||= ""
-      halt 400 if !Schema.validates?(JSON.parse(params[:custom]), JSON.parse(@site.values[:schema]))
+      #params[:custom] ||= ""
+      halt 400 if !Schema.validates?(JSON.parse(params[:custom] || '{}'), JSON.parse(@site.values[:schema] || '{}'))
       confirmed = params[:confirmed] == 'false' ? false : true
       send_confirmation_email = params[:send_confirmation_email] == 'true' ? true : false
       %w( uuid confirmed send_confirmation_email ).each {|p| params.delete(p)}

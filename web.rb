@@ -6,7 +6,7 @@ require 'json'
 require 'haml'
 require 'newrelic_rpm'
 
-require 'vellup/data'
+require './models/all'
 
 module Vellup
   class Web < Sinatra::Base
