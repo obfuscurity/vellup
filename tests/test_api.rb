@@ -36,6 +36,7 @@ class VellupApiTest < Test::Unit::TestCase
     @@site_user = JSON.parse(last_response.body)
     assert last_response.status == 201
     assert_equal @@site_user['username'], 'test_site_user@vellup.com'
+    assert @@site_user['custom'].nil?
   end
 
   def test_03_list_users
@@ -60,11 +61,14 @@ class VellupApiTest < Test::Unit::TestCase
   def test_06_auth_user
     post "/sites/#{@@site['uuid']}/users/auth", {:username => 'test_site_user@vellup.com', :password => 'test'}, @@options
     assert last_response.status == 200
+    assert_equal @@site_user['username'], 'test_site_user@vellup.com'
   end
 
   def test_07_delete_user
     delete "/sites/#{@@site['uuid']}/users/#{@@site_user['id']}", {}, @@options
     assert last_response.status == 204
+    user = User[@@site_user['id']]
+    assert user.values[:enabled] == false
   end
 
   def test_08_list_users
@@ -76,6 +80,8 @@ class VellupApiTest < Test::Unit::TestCase
   def test_09_delete_site
     delete "/sites/#{@@site['uuid']}", {}, @@options
     assert last_response.status == 204
+    site = Site.filter(:uuid => @@site['uuid']).first
+    assert site.values[:enabled] == false
   end
 
   def test_10_teardown_user
