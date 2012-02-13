@@ -41,6 +41,14 @@ module Vellup
         @user = User.filter(:api_token => request.env['HTTP_X_API_TOKEN'], :enabled => true, :confirmed => true).first
         halt 401 if @user.nil?
       end
+      def validate_site(uuid)
+        @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => uuid)
+        halt 404 if @site.nil?
+      end
+      def validate_site_user(id)
+        @site_user = User.filter(:id => :$i, :site_id => @site.id, :enabled => true).call(:first, :i => id)
+        halt 404 if @site_user.nil?
+      end
     end
 
 
@@ -56,46 +64,34 @@ module Vellup
       @sites = []
       Site.select(:uuid, :name, :schema, :created_at, :updated_at).filter(:owner_id => @user.id, :enabled => true).all.each {|s| @sites << s.values}
       halt 204 if @sites.empty?
-      status 200
       @sites.to_json
     end
 
     get '/sites/:uuid/?' do
-      @site = Site.select(:uuid, :name, :schema, :created_at, :updated_at).filter(:uuid => :$u, :enabled => true, :owner_id => @user.id).call(:first, :u => params[:uuid]) || nil
-      halt 404 if @site.nil?
-      status 200
+      validate_site(params[:uuid])
       @site.values.to_json
     end
 
     put '/sites/:uuid/?' do
-      @site = Site.filter(:uuid => :$u, :owner_id => @user.id).call(:first, :u => params[:uuid]) || nil
-      # XXX also need to check :name and :schema for validity. ARGH!
-      halt 404 if @site.nil?
+      validate_site(params[:uuid])
       @site.update(params)
       @site.save
-      status 200
       [:uuid, :name, :created_at, :updated_at, :schema].inject({}) do |v,k| v[k] = @site.values[k]; v; end.to_json
     end
 
     delete '/sites/:uuid/?' do
-      @site = Site.filter(:uuid => :$u, :enabled => true, :owner_id => @user.id).call(:first, :u => params[:uuid]) || nil
-      halt 404 if @site.nil?
+      validate_site(params[:uuid])
       @site.destroy
       status 204
     end
 
     post '/sites/:uuid/users/add' do
-      @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
-      halt 404 if @site.nil?
-      halt 410 if User.username_collision?({ :username => params[:username], :site_id => @site.id })
-      #params[:custom] ||= ""
-      halt 400 if !Schema.validates?(JSON.parse(params[:custom] || '{}'), JSON.parse(@site.values[:schema] || '{}'))
+      validate_site(params[:uuid])
       confirmed = params[:confirmed] == 'false' ? false : true
       send_confirmation_email = params[:send_confirmation_email] == 'true' ? true : false
       %w( uuid confirmed send_confirmation_email ).each {|p| params.delete(p)}
       # XXX Need to implement model-level prepared statements for escaping user input
-      @site_user = User.new(params.merge({ 'site_id' => @site.id, 'email' => params[:username], 'confirmed' => confirmed })).save || nil
-      halt 400 if @site_user.nil?
+      @site_user = User.new(params.merge({ 'site_id' => @site.id, 'email' => params[:username], 'confirmed' => confirmed })).save
       @site_user.send_confirmation_email if send_confirmation_email
       [:password, :email, :api_token, :email_is_username, :enabled, :site_id].each {|v| @site_user.values.delete(v)}
       @site_user.values.delete(:confirm_token) if confirmed
@@ -104,72 +100,53 @@ module Vellup
     end
 
     post '/sites/:uuid/users/confirm' do
-      @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
-      halt 404 if @site.nil?
+      validate_site(params[:uuid])
       @site_user = User.filter(:confirm_token => :$t, :site_id => @site.id, :enabled => true).call(:first, :t => params[:confirm_token])
       halt 404 if @site_user.nil?
       halt 304 if @site_user.confirmed?
       @site_user.confirm
       @site_user.save
       [:password, :email, :api_token, :confirm_token, :email_is_username, :enabled, :site_id].each {|v| @site_user.values.delete(v)}
-      status 200
       @site_user.values.to_json
     end
 
     get '/sites/:uuid/users/?' do
-      @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
-      halt 404 if @site.nil?
+      validate_site(params[:uuid])
       @site_users = []
       User.select(:users__id, :users__username, :users__custom, :users__confirmed, :users__created_at, :users__updated_at, :users__confirmed_at, :users__authenticated_at, :users__visited_at).from(:users, :sites).where(:users__site_id => :sites__id, :sites__uuid => :$u, :sites__enabled => true, :users__enabled => true).order(:users__id).call(:all, :u => params[:uuid]).each {|u| @site_users << u.values}
       halt 204 if @site_users.empty?
-      status 200
       @site_users.to_json
     end
 
     get '/sites/:uuid/users/:id/?' do
-      @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
-      halt 404 if @site.nil?
-      @site_user = User.select(:id, :username, :custom, :confirmed, :created_at, :updated_at, :confirmed_at, :authenticated_at, :visited_at).where(:id => :$i, :site_id => @site.id, :enabled => true).call(:first, :i => params[:id]) || nil
-      halt 404 if @site_user.nil?
-      status 200
+      validate_site(params[:uuid])
+      validate_site_user(params[:id])
       @site_user.values.to_json
     end
 
     put '/sites/:uuid/users/:id' do
-      @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
-      halt 404 if @site.nil?
-      @site_user = User.filter(:id => :$i, :site_id => @site.id, :enabled => true).call(:first, :i => params[:id]) || nil
-      halt 404 if @site_user.nil?
-      #params[:custom] ||= ""
-      halt 400 if !Schema.validates?(JSON.parse(params[:custom] || '{}'), JSON.parse(@site.values[:schema] || '{}'))
-      if !params[:password].nil?
-        halt 400 if params[:password].empty?
-        @site_user.update_password(params[:password])
-      end
+      validate_site(params[:uuid])
+      validate_site_user(params[:id])
+      @site_user.update_password(params[:password]) if params[:password]
       # XXX This will go away once we support custom json schemas
       %w( uuid id username password confirmed enabled created_at updated_at confirmed_at authenticated_at visited_at ).each {|p| params.delete(p)}
       @site_user.update(params)
       @site_user.save
-      status 200
       [ :password, :email, :api_token, :confirm_token, :email_is_username, :enabled, :site_id ].each {|k| @site_user.values.delete(k)}
       @site_user.values.to_json
     end
 
     delete '/sites/:uuid/users/:id' do
-      @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
-      halt 404 if @site.nil?
-      @site_user = User.filter(:id => :$i, :site_id => @site.id).call(:first, :i => params[:id]) || nil
-      halt 404 if @site_user.nil?
+      validate_site(params[:uuid])
+      validate_site_user(params[:id])
       @site_user.destroy
       status 204
     end
 
     post '/sites/:uuid/users/auth' do
-      @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
-      halt 404 if @site.nil?
+      validate_site(params[:uuid])
       @site_user = User.authenticate(params.merge({ :site => @site.id  })) || nil
       halt 401 if @site_user.nil?
-      status 200
       [ :password, :email, :api_token, :confirm_token, :email_is_username, :enabled, :site_id ].each {|k| @site_user.values.delete(k)}
       @site_user.values.to_json
     end
