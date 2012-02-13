@@ -1,5 +1,4 @@
 
-#require File.expand_path('../api', __FILE__)
 require './api'
 require 'test/unit'
 require 'rack/test'
