@@ -8,6 +8,9 @@ class Sequel::Model
   #def validates_email(input)
   #  errors.add(input, "Invalid username/email format, see RFC822") unless input.is_email?
   #end
+  #def validates_custom_data(input)
+  #  errors.add(input, "User data incompatible with JSON Schema") unless Schema.user_is_valid?(input)
+  #end
 end
 
 class User < Sequel::Model
@@ -21,7 +24,11 @@ class User < Sequel::Model
 
   def validate
     super
+    validates_presence [:username, :password ]
+    validates_length_range 2..60, :username
+    validates_unique :username
     #validates_email [:username, :email]
+    #validates_custom_data :custom
   end
 
   def before_create
@@ -57,9 +64,8 @@ class User < Sequel::Model
     self.save
   end
 
-  def self.username_collision?(args)
-    user = filter(:username => :$u, :site_id => :$s).call(:first, :u => args[:username], :s => args[:site_id]) || nil
-    user.nil? ? false : true
+  def really_destroy
+    self.delete
   end
 
   def minimal_user_data
