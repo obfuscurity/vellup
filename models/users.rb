@@ -5,9 +5,12 @@ require 'rest_client'
 require 'rfc822'
 
 class Sequel::Model
-  #def validates_email(input)
-  #  errors.add(input, "Invalid username/email format, see RFC822") unless input.is_email?
-  #end
+  def validates_password_complexity(input)
+    errors.add(input, "Password must be at least 4 chars long") unless input.length >= 3
+  end
+  def validates_email(input)
+    errors.add(input, "Invalid format, see RFC822") unless input.is_email?
+  end
   #def validates_custom_data(input)
   #  errors.add(input, "User data incompatible with JSON Schema") unless Schema.user_is_valid?(input)
   #end
@@ -24,10 +27,13 @@ class User < Sequel::Model
 
   def validate
     super
-    validates_presence [:username, :password ]
+    validates_presence :username
+    validates_presence :password
     validates_length_range 2..60, :username
     validates_unique :username
-    #validates_email [:username, :email]
+    validates_password_complexity self.password
+    validates_email self.username
+    validates_email self.email
     #validates_custom_data :custom
   end
 
