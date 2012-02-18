@@ -60,7 +60,6 @@ module Vellup
     get '/sites/?' do
       @sites = []
       Site.select(:uuid, :name, :schema, :created_at, :updated_at).filter(:owner_id => @user.id, :enabled => true).all.each {|s| @sites << s.values}
-      status 200
       status 204 if @sites.empty?
       @sites.to_json
     end
@@ -100,8 +99,8 @@ module Vellup
     post '/sites/:uuid/users/confirm' do
       validate_site(params[:uuid])
       @site_user = User.filter(:confirm_token => :$t, :site_id => @site.id, :enabled => true).call(:first, :t => params[:confirm_token])
-      halt 404 if @site_user.nil?
-      halt 304 if @site_user.confirmed?
+      halt 404, { :message => 'user not found' }.to_json if @site_user.nil?
+      halt 304, { :message => 'user already confirmed' }.to_json if @site_user.confirmed?
       @site_user.confirm
       @site_user.save
       [:password, :email, :api_token, :confirm_token, :email_is_username, :enabled, :site_id].each {|v| @site_user.values.delete(v)}
@@ -112,7 +111,6 @@ module Vellup
       validate_site(params[:uuid])
       @site_users = []
       User.select(:users__id, :users__username, :users__custom, :users__confirmed, :users__created_at, :users__updated_at, :users__confirmed_at, :users__authenticated_at, :users__visited_at).from(:users, :sites).where(:users__site_id => :sites__id, :sites__uuid => :$u, :sites__enabled => true, :users__enabled => true).order(:users__id).call(:all, :u => params[:uuid]).each {|u| @site_users << u.values}
-      status 200
       status 204 if @site_users.empty?
       @site_users.to_json
     end
