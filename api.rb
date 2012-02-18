@@ -6,7 +6,7 @@ require './models/all'
 
 module Vellup
   class API < Sinatra::Base
-   
+
     configure do
       enable :logging
       disable :raise_errors
@@ -29,8 +29,7 @@ module Vellup
 
     error do
       e = request.env['sinatra.error']
-      puts e.to_s
-      puts e.backtrace.join('\n')
+      halt 400, e.message.to_json
     end
 
     helpers do
@@ -53,9 +52,7 @@ module Vellup
 
 
     post '/sites/add' do
-      # XXX Need to implement model-level prepared statements for escaping user input
-      @site = Site.new(params.merge({ :owner_id => @user.id })).save || nil
-      halt 400 if @site.nil?
+      @site = Site.new(params.merge({ :owner_id => @user.id })).save
       status 201
       [:uuid, :name, :created_at, :updated_at, :schema].inject({}) do |v,k| v[k] = @site.values[k]; v; end.to_json
     end
