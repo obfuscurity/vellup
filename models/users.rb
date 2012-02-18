@@ -4,12 +4,23 @@ require 'resque'
 require 'rest_client'
 require 'rfc822'
 
+class NilClass
+  def method_missing(name, *args, &block)
+    if name.to_s == 'is_email?'
+      false
+    end
+  end
+end
+
 class Sequel::Model
   def validates_password_complexity(input)
-    errors.add(input, "Password must be at least 4 chars long") unless input.length >= 3
+    errors.add(:password, 'must be at least 4 chars long') unless input.to_s.length >= 3
+  end
+  def validates_username(input)
+    errors.add(:username, 'must be RFC822 compliant') unless input.is_email?
   end
   def validates_email(input)
-    errors.add(input, "Invalid format, see RFC822") unless input.is_email?
+    errors.add(:email, 'must be RFC822 compliant') unless input.is_email?
   end
   #def validates_custom_data(input)
   #  errors.add(input, "User data incompatible with JSON Schema") unless Schema.user_is_valid?(input)
@@ -27,12 +38,12 @@ class User < Sequel::Model
 
   def validate
     super
-    validates_presence :username
-    validates_presence :password
-    validates_length_range 2..60, :username
+    validates_presence :username, :message => 'is required'
+    validates_presence :password, :message => 'is required'
+    validates_length_range 2..60, :username, :message => 'length must be between 2 and 60 characters'
     validates_unique :username
     validates_password_complexity self.password
-    validates_email self.username
+    validates_username self.username
     validates_email self.email
     #validates_custom_data :custom
   end
