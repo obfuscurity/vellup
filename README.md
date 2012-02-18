@@ -9,9 +9,7 @@ When running the app locally, make sure to set the following environment
 variables for any shells you start processes from:
 
 ```bash
-$ export MAILGUN_API_URL=...
-$ export DATABASE_URL=...
-$ export REDISTOGO_URL=...
+$ source .env
 ```
 
 Optionally, `unset DATABASE_URL` if you want to run against a local PostgreSQL server.
@@ -58,4 +56,10 @@ OK
 
 ```bash
 $ bundle exec rake queue:work QUEUE=*
+```
+
+## Running Tests
+
+```bash
+$ bundle exec rake test --trace
 ```
