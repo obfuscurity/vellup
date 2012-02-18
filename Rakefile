@@ -5,7 +5,6 @@ task :default => "test"
 
 Rake::TestTask.new do |t|
   t.pattern = "tests/*.rb"
-  t.verbose = true
 end
 
 namespace :db do
