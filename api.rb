@@ -17,6 +17,7 @@ module Vellup
     before do
       check_api_version!
       authenticate!
+      User.raise_on_typecast_failure = false
       content_type :json
     end
 
@@ -29,7 +30,9 @@ module Vellup
 
     error do
       e = request.env['sinatra.error']
-      halt 400, { :message => e.message }.to_json
+      # only grab the first possible error
+      error = e.message.split(',').first
+      halt 400, { :message => error }.to_json
     end
 
     helpers do
