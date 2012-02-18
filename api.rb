@@ -29,24 +29,24 @@ module Vellup
 
     error do
       e = request.env['sinatra.error']
-      halt 400, e.message.to_json
+      halt 400, { :message => e.message }.to_json
     end
 
     helpers do
       def check_api_version!
-        halt 400 unless request.env['HTTP_X_API_VERSION'].to_i == 1
+        halt 400, { :message => 'missing X_API_VERSION' }.to_json unless (request.env['HTTP_X_API_VERSION'].to_i == 1)
       end
       def authenticate!
-        @user = User.filter(:api_token => request.env['HTTP_X_API_TOKEN'], :enabled => true, :confirmed => true).first
-        halt 401 if @user.nil?
+        @user = User.filter(:api_token => :$t, :enabled => true, :confirmed => true).call(:first, :t => request.env['HTTP_X_API_TOKEN'])
+        halt 401, { :message => 'incorrect or expired token' }.to_json if @user.nil?
       end
       def validate_site(uuid)
         @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => uuid)
-        halt 404 if @site.nil?
+        halt 404, { :message => 'site not found' }.to_json if @site.nil?
       end
       def validate_site_user(id)
         @site_user = User.filter(:id => :$i, :site_id => @site.id, :enabled => true).call(:first, :i => id)
-        halt 404 if @site_user.nil?
+        halt 404, { :message => 'user not found' }.to_json if @site_user.nil?
       end
     end
 
@@ -60,7 +60,8 @@ module Vellup
     get '/sites/?' do
       @sites = []
       Site.select(:uuid, :name, :schema, :created_at, :updated_at).filter(:owner_id => @user.id, :enabled => true).all.each {|s| @sites << s.values}
-      halt 204 if @sites.empty?
+      status 200
+      status 204 if @sites.empty?
       @sites.to_json
     end
 
@@ -111,7 +112,8 @@ module Vellup
       validate_site(params[:uuid])
       @site_users = []
       User.select(:users__id, :users__username, :users__custom, :users__confirmed, :users__created_at, :users__updated_at, :users__confirmed_at, :users__authenticated_at, :users__visited_at).from(:users, :sites).where(:users__site_id => :sites__id, :sites__uuid => :$u, :sites__enabled => true, :users__enabled => true).order(:users__id).call(:all, :u => params[:uuid]).each {|u| @site_users << u.values}
-      halt 204 if @site_users.empty?
+      status 200
+      status 204 if @site_users.empty?
       @site_users.to_json
     end
 
