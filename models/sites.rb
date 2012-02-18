@@ -14,8 +14,8 @@ class Site < Sequel::Model
 
   def validate
     super
-    validates_presence :name
-    validates_length_range 2..50, :name
+    validates_presence :name, :message => 'is required'
+    validates_length_range 2..50, :name, :message => 'length must be between 2 and 50 characters'
     #validates_json_schema :schema
   end
 
