@@ -14,7 +14,7 @@ end
 
 class Sequel::Model
   def validates_password_complexity(input)
-    errors.add(:password, 'must be at least 4 chars long') unless input.to_s.length >= 3
+    errors.add(:password, 'must be at least 4 chars long') unless input.length >= 3
   end
   def validates_username(input)
     errors.add(:username, 'must be RFC822 compliant') unless input.is_email?
@@ -32,6 +32,8 @@ class User < Sequel::Model
   one_to_many :sites
 
   plugin :boolean_readers
+  plugin :prepared_statements
+  plugin :prepared_statements_safe
   plugin :validation_helpers
 
   Resque.redis = ENV['REDISTOGO_URL']
@@ -51,6 +53,11 @@ class User < Sequel::Model
   def before_create
     super
     self.enabled = true
+    if self.confirmed == 'false'
+      self.confirmed = false
+    else
+      self.confirmed = true
+    end
     self.created_at = Time.now
     self.updated_at = Time.now
     self.confirmed_at = Time.now if (self.confirmed == true)
@@ -60,6 +67,7 @@ class User < Sequel::Model
   end
 
   def after_create
+    send_confirmation_email if (self.send_confirmation_email == 'true')
   end
 
   def before_update

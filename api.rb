@@ -18,6 +18,7 @@ module Vellup
       check_api_version!
       authenticate!
       User.raise_on_typecast_failure = false
+      User.strict_param_setting = false
       content_type :json
     end
 
@@ -87,14 +88,9 @@ module Vellup
 
     post '/sites/:uuid/users/add' do
       validate_site(params[:uuid])
-      confirmed = params[:confirmed] == 'false' ? false : true
-      send_confirmation_email = params[:send_confirmation_email] == 'true' ? true : false
-      %w( uuid confirmed send_confirmation_email ).each {|p| params.delete(p)}
-      # XXX Need to implement model-level prepared statements for escaping user input
-      @site_user = User.new(params.merge({ 'site_id' => @site.id, 'email' => params[:username], 'confirmed' => confirmed })).save
-      @site_user.send_confirmation_email if send_confirmation_email
+      @site_user = User.new(params.merge({ 'site_id' => @site.id, 'email' => params[:username] })).save
       [:password, :email, :api_token, :email_is_username, :enabled, :site_id].each {|v| @site_user.values.delete(v)}
-      @site_user.values.delete(:confirm_token) if confirmed
+      @site_user.values.delete(:confirm_token) if @site_user.confirmed
       status 201
       @site_user.values.to_json
     end
