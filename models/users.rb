@@ -117,7 +117,7 @@ class User < Sequel::Model
         user.save
         return user
       else
-        return false
+        return nil
       end
     end
   end

@@ -140,7 +140,7 @@ module Vellup
 
     post '/sites/:uuid/users/auth' do
       validate_site(params[:uuid])
-      @site_user = User.authenticate(params.merge({ :site => @site.id  })) || nil
+      @site_user = User.authenticate(params.merge({ :site => @site.id  }))
       halt 401 if @site_user.nil?
       [ :password, :email, :api_token, :confirm_token, :email_is_username, :enabled, :site_id ].each {|k| @site_user.values.delete(k)}
       @site_user.values.to_json
