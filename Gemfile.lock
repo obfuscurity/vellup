@@ -9,7 +9,7 @@ GEM
       thor (>= 0.13.6)
     haml (3.1.3)
     json (1.6.4)
-    json-schema (1.0.0)
+    json-schema (1.0.4)
     macaddr (1.5.0)
       systemu (>= 2.4.0)
     mime-types (1.17.2)
@@ -64,7 +64,7 @@ DEPENDENCIES
   foreman
   haml
   json
-  json-schema (= 1.0.0)
+  json-schema (= 1.0.4)
   newrelic_rpm
   pg
   rack-flash

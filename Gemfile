@@ -15,7 +15,7 @@ gem "rest-client"
 gem "resque"
 gem "rfc822", "~> 0.1.1"
 gem "json"
-gem "json-schema", "1.0.0"
+gem "json-schema", "1.0.4"
 gem "newrelic_rpm"
 
 group :development do
