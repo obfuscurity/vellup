@@ -124,9 +124,7 @@ module Vellup
       validate_site(params[:uuid])
       validate_site_user(params[:id])
       @site_user.update_password(params[:password]) if params[:password]
-      # XXX This will go away once we support custom json schemas
-      %w( uuid id username password confirmed enabled created_at updated_at confirmed_at authenticated_at visited_at ).each {|p| params.delete(p)}
-      @site_user.update(params)
+      @site_user.update(:custom => params[:custom]) if params[:custom]
       @site_user.save
       [ :password, :email, :api_token, :confirm_token, :email_is_username, :enabled, :site_id ].each {|k| @site_user.values.delete(k)}
       @site_user.values.to_json
