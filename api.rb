@@ -19,6 +19,7 @@ module Vellup
       authenticate!
       User.raise_on_typecast_failure = false
       User.strict_param_setting = false
+      Site.strict_param_setting = false
       content_type :json
     end
 
