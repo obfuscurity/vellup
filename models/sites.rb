@@ -12,6 +12,11 @@ class Site < Sequel::Model
   plugin :boolean_readers
   plugin :validation_helpers
 
+  def before_validation
+    super
+    self.schema ||= '{}'
+  end
+
   def validate
     super
     validates_presence :name, :message => 'is required'
@@ -22,7 +27,6 @@ class Site < Sequel::Model
   def before_create
     super
     self.uuid = UUID.generate(format = :compact)
-    self.schema ||= '{}'
     self.created_at = Time.now
     self.updated_at = Time.now
     self.visited_at = Time.now

@@ -39,6 +39,11 @@ class User < Sequel::Model
 
   Resque.redis = ENV['REDISTOGO_URL']
 
+  def before_validation
+    super
+    self.custom ||= '{}'
+  end
+
   def validate
     super
     validates_presence :username, :message => 'is required'
@@ -48,7 +53,7 @@ class User < Sequel::Model
     validates_password_complexity self.password
     validates_username self.username
     validates_email self.email
-    validates_custom_data self.custom unless self.custom.nil?
+    validates_custom_data self.custom
   end
 
   def before_create
@@ -65,7 +70,6 @@ class User < Sequel::Model
     self.password = encrypt_password(self.password)
     self.api_token = UUID.generate
     self.confirm_token = UUID.generate
-    self.custom ||= '{}'
   end
 
   def after_create
