@@ -19,8 +19,8 @@ module Schema
       return false
     end
   end
-  def validates?(input, schema)
-    begin JSON::Validator.validate!(schema.to_json, input.to_json, :validate_schema => true)
+  def validates_user?(input, schema)
+    begin JSON::Validator.validate!(JSON.parse(schema), JSON.parse(input), :validate_schema => true)
       return true
     rescue Exception => e
       return false

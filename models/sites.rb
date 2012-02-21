@@ -1,8 +1,8 @@
 
 class Sequel::Model
-  #def validates_json_schema(input)
-  #  errors.add(input, "Invalid JSON Schema") unless Schema.is_valid?(input)
-  #end
+  def validates_json_schema(input)
+    errors.add(input, "is an invalid JSON schema") unless Schema.is_valid?(input)
+  end
 end
 
 class Site < Sequel::Model
@@ -16,12 +16,13 @@ class Site < Sequel::Model
     super
     validates_presence :name, :message => 'is required'
     validates_length_range 2..50, :name, :message => 'length must be between 2 and 50 characters'
-    #validates_json_schema :schema
+    validates_json_schema self.schema unless self.schema.nil?
   end
 
   def before_create
     super
     self.uuid = UUID.generate(format = :compact)
+    self.schema ||= '{}'
     self.created_at = Time.now
     self.updated_at = Time.now
     self.visited_at = Time.now

@@ -107,7 +107,8 @@ class VellupApiTest < Test::Unit::TestCase
     @@site_user = JSON.parse(last_response.body)
     assert last_response.status == 201
     assert_equal @@site_user['username'], 'test_site_user@vellup.com'
-    assert @@site_user['custom'].nil?
+    assert JSON.parse(@@site_user['custom']).is_a?(Hash)
+    assert JSON.parse(@@site_user['custom']).empty?
   end
 
   def test_13_list_users

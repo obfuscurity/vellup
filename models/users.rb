@@ -22,9 +22,10 @@ class Sequel::Model
   def validates_email(input)
     errors.add(:email, 'must be RFC822 compliant') unless input.is_email?
   end
-  #def validates_custom_data(input)
-  #  errors.add(input, "User data incompatible with JSON Schema") unless Schema.user_is_valid?(input)
-  #end
+  def validates_custom_data(input)
+    site = Site.filter(:id => self.site_id).first
+    errors.add(input, "incompatible with JSON schema") unless Schema.validates_user?(site.schema, input)
+  end
 end
 
 class User < Sequel::Model
@@ -47,7 +48,7 @@ class User < Sequel::Model
     validates_password_complexity self.password
     validates_username self.username
     validates_email self.email
-    #validates_custom_data :custom
+    validates_custom_data self.custom unless self.custom.nil?
   end
 
   def before_create
@@ -64,6 +65,7 @@ class User < Sequel::Model
     self.password = encrypt_password(self.password)
     self.api_token = UUID.generate
     self.confirm_token = UUID.generate
+    self.custom ||= '{}'
   end
 
   def after_create
