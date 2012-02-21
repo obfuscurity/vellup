@@ -81,15 +81,6 @@ class User < Sequel::Model
     self.updated_at = Time.now
   end
 
-  def after_update
-  end
-
-  def before_destroy
-  end
-
-  def after_destroy
-  end
-
   def destroy
     self.enabled = false
     self.save
