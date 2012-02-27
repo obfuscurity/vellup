@@ -49,7 +49,7 @@ class User < Sequel::Model
     validates_presence :username, :message => 'is required'
     validates_presence :password, :message => 'is required'
     validates_length_range 2..60, :username, :message => 'length must be between 2 and 60 characters'
-    validates_unique :username
+    # XXX validates_unique :username
     validates_password_complexity self.password
     validates_username self.username
     validates_email self.email
