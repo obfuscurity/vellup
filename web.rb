@@ -10,7 +10,6 @@ require './models/all'
 
 module Vellup
   class Web < Sinatra::Base
-    include Vellup::Data
 
     use Rack::Flash, :sweep => true
 
