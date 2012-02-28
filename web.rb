@@ -17,6 +17,8 @@ module Vellup
       enable :logging
       enable :method_override
       enable :sessions
+      disable :raise_errors
+      disable :show_exceptions
       set :session_secret, 'o28fKzX7qP0fr7C'
       set :haml, :format => :html5
       set :port, ENV['PORT'] || 4567
@@ -43,13 +45,21 @@ module Vellup
 
     error do
       e = request.env['sinatra.error']
-      puts e.to_s
-      puts e.backtrace.join('\n')
+      error = e.message.split(',').first
+      flash[:error] = error
+      # XXX need to send them... somewhere
+      halt 400
     end
 
     helpers do
       def has_web_session?
-        session[:user] ? true : false
+        !session[:user].nil?
+      end
+      def check_for_existing_session
+        if has_web_session?
+          flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
+          redirect '/profile'
+        end
       end
       def start_web_session
         session[:user] = @user.username
@@ -59,10 +69,10 @@ module Vellup
         @user = nil
       end
       def authenticated?
-        has_web_session? or redirect '/login'
+        redirect '/login' unless has_web_session?
       end
       def site_owner?(site_uuid)
-        @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => site_uuid) || nil
+        @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => site_uuid)
         redirect '/not_found' if @site.nil?
       end
       def has_at_least_one_site?
@@ -78,27 +88,19 @@ module Vellup
     end
 
     get '/login/?' do
-      if has_web_session?
-        flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
-        redirect '/profile'
-      else
-        haml :login
-      end
+      check_for_existing_session
+      haml :login
     end
 
     post '/login' do
-      if has_web_session?
-        flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
-        redirect '/profile'
+      check_for_existing_session
+      @user = User.authenticate(params.merge({ :site => 1 }))
+      if @user
+        start_web_session
+        redirect '/sites'
       else
-        @user = User.authenticate(params.merge({ :site => 1 }))
-        if @user
-          start_web_session
-          redirect '/sites'
-        else
-          flash[:info] = 'Username or Password Invalid, Please Try Again'
-          redirect '/login'
-        end
+        flash[:info] = 'Username or Password Invalid, Please Try Again'
+        redirect '/login'
       end
     end
 
@@ -112,152 +114,116 @@ module Vellup
     end
 
     get '/signup/?' do
-      if has_web_session?
-        flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
-        redirect '/profile'
-      else
-        haml :'users/add', :locals => { :view => 'signup' }
-      end
+      check_for_existing_session
+      haml :'users/add', :locals => { :view => 'signup' }
     end
 
     post '/signup' do
-      if has_web_session?
-        flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
-        redirect '/profile'
-      else
-        if !User.username_collision?({ :username => params[:username], :site_id => 1 })
-          if params[:username].is_email?
-            # XXX Need to implement model-level prepared statements for escaping user input
-            @user = User.new(params.merge({ 'site_id' => 1, 'email' => params[:username] })).save
-            @user.send_confirmation_email
-            flash[:info] = 'Please check your inbox for a confirmation email.'
-            redirect '/login'
-          else
-            flash[:error] = 'Username must be a valid email address ( per <a href="http://www.ietf.org/rfc/rfc2822.txt">RFC2822</a> ). Please try again.'
-            redirect '/signup'
-          end
+      check_for_existing_session
+      if !User.username_collision?({ :username => params[:username], :site_id => 1 })
+        if params[:username].is_email?
+          # XXX Need to implement model-level prepared statements for escaping user input
+          @user = User.new(params.merge({ 'site_id' => 1, 'email' => params[:username] })).save
+          @user.send_confirmation_email
+          flash[:info] = 'Please check your inbox for a confirmation email.'
+          redirect '/login'
         else
-          flash[:error] = 'This username is taken, please choose another.'
+          flash[:error] = 'Username must be a valid email address ( per <a href="http://www.ietf.org/rfc/rfc2822.txt">RFC2822</a> ). Please try again.'
           redirect '/signup'
         end
+      else
+        flash[:error] = 'This username is taken, please choose another.'
+        redirect '/signup'
       end
     end
 
     get '/confirm/:token/?' do
-      if has_web_session?
-        flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
-        redirect '/profile'
+      check_for_existing_session
+      @user = User.filter(:confirm_token => :$t, :site_id => 1, :enabled => true, :confirmed => false).call(:first, :t => params[:token])
+      if @user
+        @user.confirm
+        @user.save
+        @user.send_welcome_email
+        flash[:success] = 'Your email has been confirmed. You may now login.'
+        redirect '/login'
       else
-        @user = User.filter(:confirm_token => :$t, :site_id => 1, :enabled => true, :confirmed => false).call(:first, :t => params[:token])
-        if @user
-          @user.confirm
-          @user.save
-          @user.send_welcome_email
-          flash[:success] = 'Your email has been confirmed. You may now login.'
-          redirect '/login'
-        else
-          flash[:info] = 'We were unable to confirm your email.<br />Please check your confirmation link for accuracy.'
-          redirect '/login'
-        end
+        flash[:info] = 'We were unable to confirm your email.<br />Please check your confirmation link for accuracy.'
+        redirect '/login'
       end
     end
 
     get '/confirm/?' do
-      if has_web_session?
-        flash[:info] = 'Do you want to resend confirmation for a different user? If so, please logout and try again.'
-        redirect '/profile'
+      check_for_existing_session
+      haml :'users/confirm'
+    end
+
+    post '/confirm' do
+      check_for_existing_session
+      @user = User.filter(:username => :$u, :site_id => 1).call(:first, :u => params[:username])
+      if @user
+        if @user.confirmed?
+          flash[:info] = 'This user has already been confirmed. Please login at any time.'
+          redirect '/login'
+        else
+          @user.send_confirmation_email
+          flash[:info] = 'Please check your inbox for a new confirmation email.'
+          redirect '/login'
+        end
       else
+        flash[:error] = 'Username not found. Please try again.'
         haml :'users/confirm'
       end
     end
 
-    post '/confirm' do
-      if has_web_session?
-        flash[:info] = 'Do you want to resend confirmation for a different user? If so, please logout and try again.'
-        redirect '/profile'
-      else
-        @user = User.filter(:username => :$u, :site_id => 1).call(:first, :u => params[:username])
-        if @user
-          if @user.confirmed?
-            flash[:info] = 'This user has already been confirmed. Please login at any time.'
-            redirect '/login'
-          else
-            @user.send_confirmation_email
-            flash[:info] = 'Please check your inbox for a new confirmation email.'
-            redirect '/login'
-          end
-        else
-          flash[:error] = 'Username not found. Please try again.'
-          haml :'users/confirm'
-        end
-      end
-    end
-
     get '/reset-password/?' do
-      if has_web_session?
-        flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
-        redirect '/profile'
-      else
-        haml :'users/reset_password', :locals => { :show_reset_form => false }
-      end
+      check_for_existing_session
+      haml :'users/reset_password', :locals => { :show_reset_form => false }
     end
 
     post '/reset-password' do
-      if has_web_session?
-        flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
-        redirect '/profile'
-      else
-        @user = User.filter(:username => :$u, :site_id => 1).call(:first, :u => params[:username])
-        if @user
-          if @user.confirmed?
-            @user.send_password_change_request_email
-            flash[:info] = 'Please check your inbox for directions to reset your password.'
-            redirect '/login'
-          else
-            flash[:error] = "Your account hasn't been confirmed yet. Do you need a new confirmation email instead?"
-            redirect '/confirm'
-          end
+      check_for_existing_session
+      @user = User.filter(:username => :$u, :site_id => 1).call(:first, :u => params[:username])
+      if @user
+        if @user.confirmed?
+          @user.send_password_change_request_email
+          flash[:info] = 'Please check your inbox for directions to reset your password.'
+          redirect '/login'
         else
-          flash[:error] = 'Username not found. Please try again.'
-          haml :'users/reset_password'
+          flash[:error] = "Your account hasn't been confirmed yet. Do you need a new confirmation email instead?"
+          redirect '/confirm'
         end
+      else
+        flash[:error] = 'Username not found. Please try again.'
+        haml :'users/reset_password'
       end
     end
 
     get '/reset-password/:token/?' do
-      if has_web_session?
-        flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
-        redirect '/profile'
+      check_for_existing_session
+      @user = User.filter(:confirm_token => :$t, :site_id => 1).call(:first, :t => params[:token])
+      if @user
+        haml :'users/reset_password', :locals => { :show_reset_form => true }
       else
-        @user = User.filter(:confirm_token => :$t, :site_id => 1).call(:first, :t => params[:token])
-        if @user
-          haml :'users/reset_password', :locals => { :show_reset_form => true }
-        else
-          flash[:error] = "I don't recognize that token. Mind if we try again?"
-          redirect '/reset-password'
-        end
+        flash[:error] = "I don't recognize that token. Mind if we try again?"
+        redirect '/reset-password'
       end
     end
 
     post '/reset-password/:token/?' do
-      if has_web_session?
-        flash[:warning] = "Hey, you're already logged in. Here's your user profile instead."
-        redirect '/profile'
-      else
-        @user = User.filter(:confirm_token => :$t, :site_id => 1).call(:first, :t => params[:token])
-        if @user
-          if ((params[:password1] == params[:password2]) and (!params[:password1].empty?))
-            @user.update_password(params[:password1])
-            flash[:success] = 'Your password has been successfully changed.'
-            redirect '/login'
-          else
-            flash[:error] = "Those passwords don't match. Please try again."
-            haml :'users/reset_password', :locals => { :show_reset_form => true }
-          end
+      check_for_existing_session
+      @user = User.filter(:confirm_token => :$t, :site_id => 1).call(:first, :t => params[:token])
+      if @user
+        if ((params[:password1] == params[:password2]) and (!params[:password1].empty?))
+          @user.update_password(params[:password1])
+          flash[:success] = 'Your password has been successfully changed.'
+          redirect '/login'
         else
-          flash[:error] = "I don't recognize that token. Mind if we try again?"
-          redirect '/reset-password'
+          flash[:error] = "Those passwords don't match. Please try again."
+          haml :'users/reset_password', :locals => { :show_reset_form => true }
         end
+      else
+        flash[:error] = "I don't recognize that token. Mind if we try again?"
+        redirect '/reset-password'
       end
     end
 
@@ -306,21 +272,9 @@ module Vellup
 
     post '/sites/add' do
       authenticated?
-      schema = params[:schema].empty? ? nil : params[:schema]
-      if !params[:name].empty?
-        if (schema.nil? || (Schema.is_valid_json?(schema) && Schema.is_valid?(schema)))
-          # XXX Need to implement model-level prepared statements for escaping user input
-          @site = Site.new(params.merge({ :schema => schema, :visited_at => Time.now, :owner_id => @user.id })).save
-          flash[:success] = 'Site created!'
-          redirect "/sites/#{@site.uuid}"
-        else
-          flash[:error] = 'Invalid schema definition.'
-          haml :'sites/add'
-        end
-      else
-        flash[:error] = 'Need a valid site name.'
-        haml :'sites/add'
-      end
+      @site = Site.new(params.merge({ :schema => schema, :visited_at => Time.now, :owner_id => @user.id })).save
+      flash[:success] = 'Site created!'
+      redirect "/sites/#{@site.uuid}"
     end
 
     get '/sites/?' do
@@ -331,55 +285,25 @@ module Vellup
 
     get '/sites/:uuid/?' do
       authenticated?
-      @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
-      if !@site.nil?
-        schema = ""
-        if Schema.is_valid_json?(@site.values[:schema])
-          schema = JSON.pretty_generate(JSON.parse(@site.values[:schema]))
-        end
-        haml :'sites/profile', :locals => { :profile => @site.values, :schema => schema }
-      else
-        flash[:error] = 'Site not found.'
-        redirect '/sites'
-      end
+      site_owner?(params[:uuid])
+      haml :'sites/profile', :locals => { :profile => @site.values, :schema => @site.schema }
     end
 
     put '/sites/:uuid' do
       authenticated?
-      schema = params[:schema].empty? ? nil : params[:schema]
-      @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
-      if !@site.nil?
-        if !params[:name].empty?
-          if (schema.nil? || (Schema.is_valid_json?(schema) && Schema.is_valid?(schema)))
-            params.delete('_method')
-            # XXX Need to implement model-level prepared statements for escaping user input
-            @site.update(params.merge({ :schema => schema }))
-            @site.save
-            flash[:success] = 'Site updated.'
-            redirect "/sites/#{@site.uuid}"
-          else
-            flash[:error] = 'Invalid schema definition.'
-            redirect "/sites/#{@site.uuid}"
-          end
-        else
-          flash[:error] = 'Need a valid site name.'
-          redirect "/sites/#{@site.uuid}"
-        end
-      else
-        flash[:error] = 'Site not found.'
-        redirect '/sites'
-      end
+      site_owner?(params[:uuid])
+      params.delete('_method')
+      @site.update(params.merge({ :schema => schema }))
+      @site.save
+      flash[:success] = 'Site updated.'
+      redirect "/sites/#{@site.uuid}"
     end
 
     delete '/sites/:uuid/?' do
       authenticated?
-      @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => params[:uuid]) || nil
-      if !@site.nil?
-        @site.destroy
-        flash[:info] = 'Site destroyed!'
-      else
-        flash[:error] = 'Site not found.'
-      end
+      site_owner?(params[:uuid])
+      @site.destroy
+      flash[:info] = 'Site destroyed!'
       redirect '/sites'
     end
 
@@ -393,30 +317,9 @@ module Vellup
       authenticated?
       site_owner?(params[:uuid])
       params.delete('uuid')
-      if !User.username_collision?({ :username => params[:username], :site_id => @site.id })
-        if params[:username].is_email?
-          if Schema.validates?(JSON.parse(custom), JSON.parse(@site.values[:schema]))
-            # XXX Need to implement model-level prepared statements for escaping user input
-            @site_user = User.new(params.merge({ 'site_id' => @site.id, 'email' => params[:username], 'confirmed' => true })).save || nil
-            if !@site_user.nil?
-              flash[:success] = 'User added.'
-              redirect "/sites/#{@site.uuid}/users"
-            else
-              flash[:error] = 'Something happened, we should raise an exception here.'
-              redirect "/sites/#{@site.uuid}/users/add"
-            end
-          else
-            flash[:error] = 'Does not pass schema specification. Please try again.'
-            redirect "/sites/#{@site.uuid}/users/add"
-          end
-        else
-          flash[:error] = 'Username must be a valid email address ( per <a href="http://www.ietf.org/rfc/rfc2822.txt">RFC2822</a> ). Please try again.'
-          redirect "/sites/#{@site.uuid}/users/add"
-        end
-      else
-        flash[:error] = 'This username is taken, please choose another.'
-        redirect "/sites/#{@site.uuid}/users/add"
-      end
+      @site_user = User.new(params.merge({ 'site_id' => @site.id, 'email' => params[:username], 'confirmed' => true })).save
+      flash[:success] = 'User added.'
+      redirect "/sites/#{@site.uuid}/users"
     end
 
     get '/sites/:uuid/users/?' do
@@ -430,12 +333,9 @@ module Vellup
     get '/sites/:uuid/users/:id/?' do
       authenticated?
       site_owner?(params[:uuid])
-      @profile = User.filter(:id => :$i, :site_id => @site.id, :enabled => true).call(:first, :i => params[:id]) || nil
+      @profile = User.filter(:id => :$i, :site_id => @site.id, :enabled => true).call(:first, :i => params[:id])
       if !@profile.nil?
-        preview = nil
-        if !@profile.values[:custom].nil?
-          preview = JSON.pretty_generate(JSON.parse(@profile.values[:custom]))
-        end
+        preview = JSON.pretty_generate(JSON.parse(@profile.values[:custom]))
         haml :'users/profile', :locals => { :profile => @profile, :preview => preview, :site => @site.name, :uuid => @site.uuid }
       else
         flash[:error] = 'User not found.'
@@ -446,26 +346,20 @@ module Vellup
     put '/sites/:uuid/users/:id' do
       authenticated?
       site_owner?(params[:uuid])
-      @site_user = User.filter(:id => :$i, :site_id => @site.id, :enabled => true).call(:first, :i => params[:id]) || nil
+      @site_user = User.filter(:id => :$i, :site_id => @site.id, :enabled => true).call(:first, :i => params[:id])
       if !@site_user.nil?
-        tmp_params = {}; JSON.parse(params[:custom]).each {|k,v| tmp_params[k.to_sym] = v}
-        if Schema.validates?(@site_user.values.merge(tmp_params), JSON.parse(@site.values[:schema]))
-          if ((! params[:password1].empty?) || (! params[:password2].empty?))
-            if ((params[:password1] == params[:password2]) and (! params[:password1].empty?))
-              @site_user.update_password(params[:password1])
-            else
-              flash[:error] = "Those passwords don't match. Please try again."
-              redirect "/sites/#{@site.uuid}/users/#{@site_user.id}"
-            end
+        if ((! params[:password1].empty?) || (! params[:password2].empty?))
+          if ((params[:password1] == params[:password2]) and (! params[:password1].empty?))
+            @site_user.update_password(params[:password1])
+          else
+            flash[:error] = "Those passwords don't match. Please try again."
+            redirect "/sites/#{@site.uuid}/users/#{@site_user.id}"
           end
-          @site_user.update(:custom => params[:custom])
-          @site_user.save
-          flash[:success] = "The user's profile has been updated."
-          redirect "/sites/#{@site.uuid}/users/#{@site_user.id}"
-        else
-          flash[:error] = 'Invalid settings. Please try again.'
-          redirect "/sites/#{@site.uuid}/users/#{@site_user.id}"
         end
+        @site_user.update(:custom => params[:custom])
+        @site_user.save
+        flash[:success] = "The user's profile has been updated."
+        redirect "/sites/#{@site.uuid}/users/#{@site_user.id}"
       else
         flash[:error] = 'User not found.'
         redirect "/sites/#{@site.uuid}/users"
@@ -475,7 +369,7 @@ module Vellup
     delete '/sites/:uuid/users/:id' do
       authenticated?
       site_owner?(params[:uuid])
-      @site_user = User.filter(:id => :$i, :site_id => @site.id, :enabled => true).call(:first, :i => params[:id]) || nil
+      @site_user = User.filter(:id => :$i, :site_id => @site.id, :enabled => true).call(:first, :i => params[:id])
       if !@site_user.nil?
         @site_user.destroy
         flash[:info] = 'User destroyed!'
@@ -485,6 +379,5 @@ module Vellup
         redirect "/sites/#{@site.uuid}/users"
       end
     end
-
   end
 end
