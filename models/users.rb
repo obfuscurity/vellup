@@ -20,7 +20,7 @@ class Sequel::Model
     errors.add(:username, 'must be RFC822 compliant') unless input.is_email?
   end
   def validates_username_is_unique_to_site(input)
-    collisions = User.filter(:id => self.id, :username => self.username, :site_id => self.site_id).first
+    collisions = User.filter(:username => self.username, :site_id => self.site_id).exclude(:id => self.id).first
     errors.add(:username, 'already exists') if !collisions.nil?
   end
   def validates_email(input)
