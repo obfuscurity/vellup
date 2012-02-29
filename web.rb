@@ -46,9 +46,8 @@ module Vellup
     error do
       e = request.env['sinatra.error']
       error = e.message.split(',').first
-      flash[:error] = error
-      # XXX need to send them... somewhere
-      halt 400
+      flash[:error] = error.capitalize
+      redirect request.path
     end
 
     helpers do
