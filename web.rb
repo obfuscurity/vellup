@@ -239,23 +239,18 @@ module Vellup
     put '/profile' do
       authenticated?
       tmp_params = {}; JSON.parse(params[:custom]).each {|k,v| tmp_params[k.to_sym] = v}
-      if Schema.validates?(@user.values.merge(tmp_params), JSON.parse(Site[1].values[:schema]))
-        if ((! params[:password1].empty?) || (! params[:password2].empty?))
-          if ((params[:password1] == params[:password2]) and (! params[:password1].empty?))
-            @user.update_password(params[:password1])
-          else
-            flash[:error] = "Those passwords don't match. Please try again."
-            redirect '/profile'
-          end
+      if ((! params[:password1].empty?) || (! params[:password2].empty?))
+        if ((params[:password1] == params[:password2]) and (! params[:password1].empty?))
+          @user.update_password(params[:password1])
+        else
+          flash[:error] = "Those passwords don't match. Please try again."
+          redirect '/profile'
         end
-        @user.update(:custom => params[:custom])
-        @user.save
-        flash[:success] = 'Your profile has been updated.'
-        redirect '/profile'
-      else
-        flash[:error] = 'Invalid settings. Please try again.'
-        redirect '/profile'
       end
+      @user.update(:custom => params[:custom])
+      @user.save
+      flash[:success] = 'Your profile has been updated.'
+      redirect '/profile'
     end
 
     post '/reset-token' do
@@ -272,7 +267,7 @@ module Vellup
 
     post '/sites/add' do
       authenticated?
-      @site = Site.new(params.merge({ :schema => schema, :visited_at => Time.now, :owner_id => @user.id })).save
+      @site = Site.new(params.merge({ :visited_at => Time.now, :owner_id => @user.id })).save
       flash[:success] = 'Site created!'
       redirect "/sites/#{@site.uuid}"
     end
@@ -293,7 +288,7 @@ module Vellup
       authenticated?
       site_owner?(params[:uuid])
       params.delete('_method')
-      @site.update(params.merge({ :schema => schema }))
+      @site.update(params)
       @site.save
       flash[:success] = 'Site updated.'
       redirect "/sites/#{@site.uuid}"
