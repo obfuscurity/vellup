@@ -19,6 +19,10 @@ class Sequel::Model
   def validates_username(input)
     errors.add(:username, 'must be RFC822 compliant') unless input.is_email?
   end
+  def validates_username_is_unique_to_site(input)
+    collisions = User.filter(:id => self.id, :username => self.username, :site_id => self.site_id).first
+    errors.add(:username, 'already exists') if !collisions.nil?
+  end
   def validates_email(input)
     errors.add(:email, 'must be RFC822 compliant') unless input.is_email?
   end
@@ -49,9 +53,9 @@ class User < Sequel::Model
     validates_presence :username, :message => 'is required'
     validates_presence :password, :message => 'is required'
     validates_length_range 2..60, :username, :message => 'length must be between 2 and 60 characters'
-    # XXX validates_unique :username
     validates_password_complexity self.password
     validates_username self.username
+    validates_username_is_unique_to_site self.username
     validates_email self.email
     validates_custom_data self.custom
   end
