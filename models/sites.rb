@@ -1,7 +1,7 @@
 
 class Sequel::Model
   def validates_json_schema(input)
-    errors.add(input, "is an invalid JSON schema") unless Schema.is_valid?(input)
+    errors.add(input, 'is an invalid JSON schema') unless Schema.is_valid?(input)
   end
 end
 
@@ -14,7 +14,7 @@ class Site < Sequel::Model
 
   def before_validation
     super
-    self.schema ||= '{}'
+    self.schema = '{}' if self.schema.empty?
   end
 
   def validate
