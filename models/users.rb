@@ -77,6 +77,7 @@ class User < Sequel::Model
   end
 
   def after_create
+    p self
     send_confirmation_email if (self.send_confirmation_email == 'true')
   end
 
