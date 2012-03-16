@@ -49,8 +49,8 @@ module Vellup
         @site = Site.filter(:uuid => :$u, :owner_id => @user.id, :enabled => true).call(:first, :u => uuid)
         halt 404, { :message => 'site not found' }.to_json if @site.nil?
       end
-      def validate_site_user(id)
-        @site_user = User.filter(:id => :$i, :site_id => @site.id, :enabled => true).call(:first, :i => id)
+      def validate_site_user(username)
+        @site_user = User.filter(:username => :$u, :site_id => @site.id, :enabled => true).call(:first, :u => username)
         halt 404, { :message => 'user not found' }.to_json if @site_user.nil?
       end
     end
@@ -115,15 +115,15 @@ module Vellup
       @site_users.to_json
     end
 
-    get '/sites/:uuid/users/:id/?' do
+    get '/sites/:uuid/users/:username/?' do
       validate_site(params[:uuid])
-      validate_site_user(params[:id])
+      validate_site_user(params[:username])
       @site_user.values.to_json
     end
 
-    put '/sites/:uuid/users/:id' do
+    put '/sites/:uuid/users/:username' do
       validate_site(params[:uuid])
-      validate_site_user(params[:id])
+      validate_site_user(params[:username])
       @site_user.update_password(params[:password]) if params[:password]
       @site_user.update(:custom => params[:custom]) if params[:custom]
       @site_user.save
@@ -131,9 +131,9 @@ module Vellup
       @site_user.values.to_json
     end
 
-    delete '/sites/:uuid/users/:id' do
+    delete '/sites/:uuid/users/:username' do
       validate_site(params[:uuid])
-      validate_site_user(params[:id])
+      validate_site_user(params[:username])
       @site_user.destroy
       status 204
     end

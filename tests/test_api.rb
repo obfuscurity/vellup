@@ -126,7 +126,7 @@ class VellupApiTest < Test::Unit::TestCase
 
   def test_14_modify_user
     "Modifying the custom data blob of our test user"
-    put "/sites/#{@@site['uuid']}/users/#{@@site_user['id']}", {:custom => '{"firstname":"Test","lastname":"Tester"}'}, @@options
+    put "/sites/#{@@site['uuid']}/users/#{@@site_user['username']}", {:custom => '{"firstname":"Test","lastname":"Tester"}'}, @@options
     @@site_user = JSON.parse(last_response.body)
     assert last_response.status == 200
     assert_equal JSON.parse(@@site_user['custom'])['firstname'], 'Test'
@@ -141,7 +141,7 @@ class VellupApiTest < Test::Unit::TestCase
 
   def test_16_get_user
     "Getting the details of our test user"
-    get "/sites/#{@@site['uuid']}/users/#{@@site_user['id']}", {}, @@options
+    get "/sites/#{@@site['uuid']}/users/#{@@site_user['username']}", {}, @@options
     @@site_user = JSON.parse(last_response.body)
     assert last_response.status == 200
     assert_equal JSON.parse(@@site_user['custom'])['firstname'], 'Test'
@@ -163,7 +163,7 @@ class VellupApiTest < Test::Unit::TestCase
 
   def test_19_delete_user
     "Deleting our test user"
-    delete "/sites/#{@@site['uuid']}/users/#{@@site_user['id']}", {}, @@options
+    delete "/sites/#{@@site['uuid']}/users/#{@@site_user['username']}", {}, @@options
     assert last_response.status == 204
     user = User[@@site_user['id']]
     assert user.values[:enabled] == false
@@ -171,7 +171,7 @@ class VellupApiTest < Test::Unit::TestCase
 
   def test_20_get_invalid_user
     "Getting user details should fail after deleting user"
-    get "/sites/#{@@site['uuid']}/users/#{@@site_user['id']}", {}, @@options
+    get "/sites/#{@@site['uuid']}/users/#{@@site_user['username']}", {}, @@options
     assert last_response.status == 404
   end
 
