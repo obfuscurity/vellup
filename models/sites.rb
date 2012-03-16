@@ -14,7 +14,7 @@ class Site < Sequel::Model
 
   def before_validation
     super
-    self.schema = '{}' if self.schema.empty?
+    self.schema = '{}' if (self.schema.empty? || self.schema.nil?)
   end
 
   def validate

@@ -45,7 +45,7 @@ class User < Sequel::Model
 
   def before_validation
     super
-    self.custom = '{}' if self.custom.empty?
+    self.custom = '{}' if (self.custom.empty? || self.custom.nil?)
   end
 
   def validate
