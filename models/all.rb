@@ -2,7 +2,8 @@
 require 'sequel'
 require 'uuid'
 
-Sequel.connect(ENV['DATABASE_URL'] || 'postgres://localhost/vellup')
+db = ENV['DATABASE_URL'] || 'postgres://localhost/vellup'
+Sequel.connect(db)
 
 $LOAD_PATH.unshift File.dirname(__FILE__)
 require 'sites'
