@@ -118,6 +118,7 @@ module Vellup
     get '/sites/:uuid/users/:username/?' do
       validate_site(params[:uuid])
       validate_site_user(params[:username])
+      [ :password, :email, :api_token, :confirm_token, :email_is_username, :enabled, :site_id ].each {|k| @site_user.values.delete(k)}
       @site_user.values.to_json
     end
 
