@@ -33,8 +33,8 @@ Sequel.migration do
 
     create_table(:sessions) do
       String      :token,         :size => 64, :null => false, :unique => true
-      DateTime    :created_at,                 :null => false
-      DateTime    :expires_at,                 :null => false
+      column      :created_at, "timestamp with time zone", :null => false
+      column      :expires_at, "timestamp with time zone", :null => false
       foreign_key :user_id, :users
     end
   end
