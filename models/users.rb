@@ -72,8 +72,8 @@ class User < Sequel::Model
     self.updated_at = Time.now
     self.confirmed_at = Time.now if (self.confirmed == true)
     self.password = encrypt_password(self.password)
-    self.api_token = UUID.generate
-    self.confirm_token = UUID.generate
+    self.api_token = SecureRandom.hex(16)
+    self.confirm_token = SecureRandom.hex(16)
   end
 
   def after_create
@@ -138,7 +138,7 @@ class User < Sequel::Model
   end
 
   def send_password_change_request_email
-    self.confirm_token = UUID.generate
+    self.confirm_token = SecureRandom.hex(16)
     self.save
     Resque.enqueue(Email, minimal_user_data, :resetpassword)
   end
@@ -146,12 +146,12 @@ class User < Sequel::Model
   def update_password(string)
     self.password = encrypt_password(string)
     # destroy the old token
-    self.confirm_token = UUID.generate
+    self.confirm_token = SecureRandom.hex(16)
     self.save
   end
 
   def reset_api_token
-    self.api_token = UUID.generate
+    self.api_token = SecureRandom.hex(16)
     self.save
   end
 end

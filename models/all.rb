@@ -1,6 +1,6 @@
 
 require 'sequel'
-require 'uuid'
+require 'securerandom'
 
 db = ENV['DATABASE_URL'] || 'postgres://localhost/vellup'
 Sequel.connect(db)

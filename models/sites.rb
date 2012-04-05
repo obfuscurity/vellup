@@ -26,7 +26,7 @@ class Site < Sequel::Model
 
   def before_create
     super
-    self.uuid = UUID.generate(format = :compact)
+    self.uuid = SecureRandom.hex(16)
     self.created_at = Time.now
     self.updated_at = Time.now
     self.visited_at = Time.now

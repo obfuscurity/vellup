@@ -18,8 +18,8 @@ Sequel.migration do
       String      :password,      :size => 80, :null => false
       String      :email,         :size => 60, :null => false
       String      :custom,                     :null => true,  :text => true
-      String      :api_token,     :size => 40, :null => false
-      String      :confirm_token, :size => 40, :null => false
+      String      :api_token,     :size => 32, :null => false
+      String      :confirm_token, :size => 32, :null => false
       TrueClass   :email_is_username,          :null => false, :default => true
       TrueClass   :enabled,                    :null => false, :default => false
       TrueClass   :confirmed,                  :null => false, :default => false
@@ -31,21 +31,16 @@ Sequel.migration do
       foreign_key :site_id, :sites, :deferrable => true
     end
 
-    create_table(:actions) do
-      primary_key :id
-      String      :name,          :size => 20, :null => false 
-    end
-
-    create_table(:transactions) do
-      DateTime    :timestamp,                  :null => false
-      foreign_key :site_id, :sites
+    create_table(:sessions) do
+      String      :token,         :size => 64, :null => false, :unique => true
+      DateTime    :created_at,                 :null => false
+      DateTime    :expires_at,                 :null => false
       foreign_key :user_id, :users
-      foreign_key :action_id, :actions
     end
   end
 
   down do
-    drop_table(:transactions, :actions, :sites, :users, :cascade => true)
+    drop_table(:sessions, :sites, :users, :cascade => true)
   end
 end
 
