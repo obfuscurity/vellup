@@ -1,7 +1,7 @@
 source "http://rubygems.org"
 
 gem "rake"
-gem "sinatra", "1.3.1"
+gem "sinatra", "2.1.0"
 gem "thin", "1.2.10"
 gem "haml"
 gem "pg"
