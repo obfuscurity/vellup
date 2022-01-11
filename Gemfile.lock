@@ -14,7 +14,7 @@ GEM
       tilt
     http-cookie (1.0.4)
       domain_name (~> 0.5)
-    json (1.6.4)
+    json (2.3.0)
     json-schema (1.0.4)
     mime-types (2.99.3)
     multi_json (1.0.4)
