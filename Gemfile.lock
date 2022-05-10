@@ -30,7 +30,7 @@ GEM
     rack (2.2.3)
     rack-flash (0.1.2)
       rack
-    rack-protection (2.1.0)
+    rack-protection (2.2.0)
       rack
     rack-test (1.1.0)
       rack (>= 1.0, < 3)
@@ -52,10 +52,10 @@ GEM
     rfc822 (0.1.5)
     ruby2_keywords (0.0.5)
     sequel (5.52.0)
-    sinatra (2.1.0)
+    sinatra (2.2.0)
       mustermann (~> 1.0)
       rack (~> 2.2)
-      rack-protection (= 2.1.0)
+      rack-protection (= 2.2.0)
       tilt (~> 2.0)
     sinatra-redirect-with-flash (0.2.1)
       sinatra (>= 1.0.0)
@@ -89,7 +89,7 @@ DEPENDENCIES
   rest-client
   rfc822 (~> 0.1.1)
   sequel
-  sinatra (= 2.1.0)
+  sinatra (= 2.2.0)
   sinatra-redirect-with-flash
   thin (= 1.2.10)
 
