@@ -27,7 +27,7 @@ GEM
     netrc (0.11.0)
     newrelic_rpm (8.3.0)
     pg (1.2.3)
-    rack (2.2.3)
+    rack (2.2.3.1)
     rack-flash (0.1.2)
       rack
     rack-protection (2.2.0)
